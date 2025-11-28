@@ -1,1111 +1,2332 @@
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import {
-    getAuth,
-    onAuthStateChanged,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-  import {
-    getFirestore,
-    doc,
-    setDoc,
-    getDoc
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VSG Buddy</title>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyB0Grf96gKPyhs3AGnE5tnu1oxPi4mn9nw",
-    authDomain: "vsg-buddy.firebaseapp.com",
-    projectId: "vsg-buddy",
-    storageBucket: "vsg-buddy.firebasestorage.app",
-    messagingSenderId: "835934469982",
-    appId: "1:835934469982:web:ca9abc795a8c600256d9cf",
-    measurementId: "G-NJEDXSX3KQ"
-  };
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const analytics = getAnalytics(app);
-
-  // Local storage keys renamed to match new brand
-  const STORAGE_KEY = "vsgBuddyData";
-  const SETTINGS_KEY = "vsgBuddySettings";
-  // New key so the donation prompt can show again even if the old one was hidden
-  const DONATE_HIDE_KEY = "vsgBuddyHideDonatePrompt_v2";
-
-  const GOALS = { water: 64, protein: 60, walk: 20 };
-
-  // DOM refs
-  const loginPage = document.getElementById("loginPage");
-  const appMain = document.getElementById("appMain");
-
-  const authEmailInput = document.getElementById("authEmail");
-  const authPasswordInput = document.getElementById("authPassword");
-  const loginBtn = document.getElementById("loginBtn");
-  const registerBtn = document.getElementById("registerBtn");
-
-  const dateInput = document.getElementById("date");
-  const waterInput = document.getElementById("water");
-  const proteinInput = document.getElementById("protein");
-  const weightInput = document.getElementById("weight");
-  const walkInput = document.getElementById("walk");
-  const medsInput = document.getElementById("meds");
-  const notesInput = document.getElementById("notes");
-
-  const saveBtn = document.getElementById("saveBtn");
-  const clearBtn = document.getElementById("clearBtn");
-  const goToProgressBtn = document.getElementById("goToProgressBtn");
-  const downloadJsonBtn = document.getElementById("downloadJsonBtn");
-  const backupJsonBtn = document.getElementById("backupJsonBtn");
-  const restoreJsonInput = document.getElementById("restoreJsonInput");
-
-  const summaryDiv = document.getElementById("summary");
-  const navTabs = document.querySelectorAll(".nav-tab");
-  const pages = document.querySelectorAll(".page");
-  const quoteText = document.getElementById("quoteText");
-  const quoteDate = document.getElementById("quoteDate");
-  const noDataMsg = document.getElementById("noDataMsg");
-
-  const menuToggle = document.getElementById("menuToggle");
-  const sideMenu = document.getElementById("sideMenu");
-  const closeMenuBtn = document.getElementById("closeMenuBtn");
-  const topAuthStatus = document.getElementById("topAuthStatus");
-  const sideAuthStatus = document.getElementById("sideAuthStatus");
-  const logoutBtn = document.getElementById("logoutBtn");
-
-  const waterRingCircle = document.getElementById("waterRingCircle");
-  const proteinRingCircle = document.getElementById("proteinRingCircle");
-  const walkRingCircle = document.getElementById("walkRingCircle");
-  const waterRingPercent = document.getElementById("waterRingPercent");
-  const proteinRingPercent = document.getElementById("proteinRingPercent");
-  const walkRingPercent = document.getElementById("walkRingPercent");
-
-  const weeklySummaryDiv = document.getElementById("weeklySummary");
-  const streaksSummaryDiv = document.getElementById("streaksSummary");
-  const surgeryDateInput = document.getElementById("surgeryDateInput");
-  const goalWeightInput = document.getElementById("goalWeightInput");
-  const saveJourneyBtn = document.getElementById("saveJourneyBtn");
-  const journeySummaryDiv = document.getElementById("journeySummary");
-
-  const themeButtons = document.querySelectorAll(".theme-btn");
-
-  const donationPrompt = document.getElementById("donationPrompt");
-  const donationCloseBtn = document.getElementById("donationCloseBtn");
-  const donationSupportBtn = document.getElementById("donationSupportBtn");
-  const donationLaterBtn = document.getElementById("donationLaterBtn");
-  const donationNeverBtn = document.getElementById("donationNeverBtn");
-
-  const toastEl = document.getElementById("toast");
-
-  let currentUser = null;
-  let weightChart, waterChart, proteinChart, walkChart;
-  let appSettings = {};
-
-  const THEMES = {
-    calm: {
-      "--bg-gradient": "linear-gradient(135deg, #e3f2fd, #e8f5e9)",
-      "--accent": "#4f8cff",
-      "--accent-soft": "#e3edff",
-      "--accent-strong": "#2f5fd6",
-      "--card-bg": "rgba(255, 255, 255, 0.95)",
-      "--text-main": "#1f2933",
-      "--text-muted": "#6b7b8c"
-    },
-    sunrise: {
-      "--bg-gradient": "linear-gradient(135deg, #ffe4e1, #fff3cd)",
-      "--accent": "#ff8c69",
-      "--accent-soft": "#ffe0d6",
-      "--accent-strong": "#e6693e",
-      "--card-bg": "rgba(255, 255, 255, 0.96)",
-      "--text-main": "#3f2a2a",
-      "--text-muted": "#8b6b5c"
-    },
-    midnight: {
-      "--bg-gradient": "linear-gradient(135deg, #020617, #111827)",
-      "--accent": "#38bdf8",
-      "--accent-soft": "#0ea5e9",
-      "--accent-strong": "#0284c7",
-      "--card-bg": "rgba(15, 23, 42, 0.96)",
-      "--text-main": "#e5e7eb",
-      "--text-muted": "#9ca3af"
-    }
-  };
-
-  function getTodayString() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
-
-  function loadAllDataLocal() {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return {};
-    try { return JSON.parse(stored); } catch { return {}; }
-  }
-
-  function saveAllDataLocal(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
-
-  function loadSettingsLocal() {
-    const stored = localStorage.getItem(SETTINGS_KEY);
-    if (!stored) return {};
-    try { return JSON.parse(stored); } catch { return {}; }
-  }
-
-  function saveSettingsLocal(settings) {
-    appSettings = settings;
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  }
-
-  async function loadAllDataCloud() {
-    if (!currentUser) return {};
-    const snap = await getDoc(doc(db, "users", currentUser.uid));
-    if (!snap.exists()) return {};
-    return snap.data().days || {};
-  }
-
-  async function saveAllDataCloud(data) {
-    if (!currentUser) return;
-    await setDoc(
-      doc(db, "users", currentUser.uid),
-      { days: data },
-      { merge: true }
-    );
-  }
-
-  function updateProgressRings(dayData) {
-    const water = dayData?.water || 0;
-    const protein = dayData?.protein || 0;
-    const walk = dayData?.walk || 0;
-
-    function setRing(circleEl, percentEl, value, goal) {
-      if (!circleEl || !percentEl) return;
-      const pct = goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : 0;
-      const angle = pct * 3.6;
-      circleEl.style.background =
-        `conic-gradient(var(--accent) ${angle}deg, #e5edf7 0deg)`;
-      percentEl.textContent = pct + "%";
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #e3f2fd, #e8f5e9);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --accent: #4f8cff;
+      --accent-soft: #e3edff;
+      --accent-strong: #2f5fd6;
+      --text-main: #1f2933;
+      --text-muted: #6b7b8c;
+      --danger: #f05454;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --shadow-soft: 0 14px 30px rgba(15, 23, 42, 0.12);
     }
 
-    setRing(waterRingCircle, waterRingPercent, water, GOALS.water);
-    setRing(proteinRingCircle, proteinRingPercent, protein, GOALS.protein);
-    setRing(walkRingCircle, walkRingPercent, walk, GOALS.walk);
-  }
+    * { box-sizing: border-box; }
 
-  async function loadDataForDate(dateStr) {
-    let allData = loadAllDataLocal();
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-gradient);
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px;
+      color: var(--text-main);
+    }
 
-    if (currentUser) {
-      try {
-        const cloudData = await loadAllDataCloud();
-        allData = { ...allData, ...cloudData };
-        saveAllDataLocal(allData);
-      } catch (e) {
-        console.error("Error loading from cloud:", e);
+    .app-container {
+      width: 100%;
+      max-width: 780px;
+      position: relative;
+    }
+
+    /* LOGIN PAGE */
+
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 12px;
+    }
+
+    .login-card {
+      background: var(--card-bg);
+      border-radius: 24px;
+      padding: 26px 22px 28px;
+      box-shadow: var(--shadow-soft);
+      max-width: 430px;
+      width: 100%;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .login-title {
+      font-size: 2.1rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+    }
+
+    .login-subtitle {
+      font-size: 0.82rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 0 0 18px;
+    }
+
+    .login-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 12px;
+    }
+
+    /* Top bar + slide-out menu */
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+    }
+
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .top-auth-text {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .menu-btn,
+    .close-menu-btn {
+      border-radius: 999px;
+      border: none;
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .side-menu {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      width: 260px;
+      max-width: 80%;
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 16px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.4);
+      padding: 12px 14px 14px;
+      z-index: 1000;
+      display: none;
+    }
+
+    .side-menu.open { display: block; }
+
+    .side-menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .side-menu-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      font-size: 0.85rem;
+    }
+
+    .side-menu-item + .side-menu-item { margin-top: 10px; }
+
+    .side-menu-label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .side-menu-links a {
+      display: inline-block;
+      margin-right: 8px;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
+      color: var(--accent-strong);
+      text-decoration: none;
+    }
+
+    .side-menu-links a:hover { text-decoration: underline; }
+
+    .side-auth-status {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .side-logout-btn {
+      border-radius: 999px;
+      border: none;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* Brand logo in top bar */
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.18);
+    }
+
+    .brand-icon-inner {
+      position: relative;
+      font-size: 18px;
+    }
+
+    .icon-heart {
+      position: absolute;
+      font-size: 11px;
+      right: -4px;
+      bottom: -4px;
+      color: #f97373;
+    }
+
+    .brand-text-block {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .brand-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-main);
+    }
+
+    .brand-tagline {
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .app-header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .tagline {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      letter-spacing: 0.02em;
+      margin: 0;
+    }
+
+    .chip-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--text-muted);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: 18px 18px 20px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(8px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+
+    .card-title { font-size: 1.05rem; font-weight: 600; }
+    .card-subtitle { font-size: 0.85rem; color: var(--text-muted); }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    input[type="number"],
+    input[type="date"],
+    input[type="email"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      margin-top: 4px;
+      padding: 9px 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid #d2dde8;
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      background-color: #f9fbff;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+      background-color: #ffffff;
+    }
+
+    textarea { resize: vertical; min-height: 70px; }
+
+    .inline-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .inline-row .field {
+      flex: 1 1 0;
+      min-width: 120px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      background-color: #f5f7fb;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+    }
+
+    .checkbox-row label {
+      margin: 0;
+      font-weight: 500;
+    }
+
+    .button-row {
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.15s ease, opacity 0.12s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
+    #saveBtn {
+      background: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 10px 18px rgba(79, 140, 255, 0.35);
+    }
+
+    #saveBtn:hover { background: var(--accent-strong); }
+
+    #clearBtn {
+      background: #ffffff;
+      color: var(--danger);
+      border: 1px solid #ffc9c9;
+    }
+    #clearBtn:hover { background: #ffecec; }
+
+    .hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+      margin-bottom: 8px;
+    }
+
+    .summary-item {
+      padding: 10px;
+      border-radius: var(--radius-md);
+      background-color: #f6f8ff;
+      font-size: 0.86rem;
+    }
+
+    .summary-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .summary-value { font-weight: 600; }
+
+    .notes-box {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: var(--radius-md);
+      background-color: #f8fafc;
+      font-size: 0.86rem;
+      color: var(--text-main);
+      border: 1px dashed #d5e0ec;
+    }
+    .notes-empty { font-style: italic; color: var(--text-muted); }
+
+    /* Tabs / pages */
+
+    .nav-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      margin-bottom: 16px;
+    }
+
+    .nav-tab {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 999px;
+      border: 1px solid #d2dde8;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .nav-tab.active {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .page { margin-top: 8px; }
+    .page.hidden { display: none; }
+
+    .affirmation-list { margin: 0; padding-left: 20px; font-size: 0.9rem; }
+    .affirmation-list li { margin-bottom: 6px; }
+
+    .chart-title {
+      margin-top: 16px;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* Recommended products grid */
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .product-card {
+      background-color: #f6f8ff;
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .product-name { font-weight: 600; font-size: 0.95rem; }
+    .product-tagline { font-size: 0.82rem; color: var(--text-muted); }
+    .product-link {
+      font-size: 0.85rem;
+      color: var(--accent-strong);
+      text-decoration: none;
+      margin-top: 4px;
+    }
+    .product-link:hover { text-decoration: underline; }
+
+    /* Backup / restore styling */
+
+    .backup-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1px solid #d2dde8;
+      background: rgba(255, 255, 255, 0.9);
+      font-size: 0.85rem;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .backup-label span { pointer-events: none; }
+    .backup-label input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* Progress rings */
+
+    .ring-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .ring {
+      flex: 1 1 0;
+      min-width: 90px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .ring-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent) 0deg, #e5edf7 0deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring-inner {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      text-align: center;
+      padding: 2px;
+    }
+
+    .ring-main { font-weight: 600; font-size: 0.9rem; }
+    .ring-caption {
+      margin-top: 2px;
+      color: var(--text-muted);
+    }
+
+    /* Weekly summary + streaks + journey */
+
+    .weekly-card,
+    .streaks-card,
+    .journey-card {
+      margin-top: 16px;
+      padding-top: 10px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 0.86rem;
+    }
+
+    .weekly-list {
+      margin: 6px 0 0;
+      padding-left: 18px;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .badge-pill {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      font-size: 0.78rem;
+    }
+
+    .streak-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .streak-item {
+      background: #f6f8ff;
+      border-radius: var(--radius-md);
+      padding: 8px;
+      font-size: 0.8rem;
+    }
+
+    .journey-settings { margin-bottom: 8px; }
+    .journey-summary p { margin: 4px 0; }
+
+    /* Appearance / themes */
+
+    .theme-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .theme-btn {
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      background: #f1f5f9;
+      border-radius: 999px;
+      border: 1px solid #d2dde8;
+    }
+
+    .theme-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* DARK MODE FIXES */
+
+    body.dark-mode { color: var(--text-main); }
+
+    body.dark-mode .card {
+      background: rgba(15, 23, 42, 0.96);
+    }
+
+    body.dark-mode .summary-item,
+    body.dark-mode .product-card,
+    body.dark-mode .streak-item {
+      background: #020617;
+      border: 1px solid #1f2937;
+    }
+
+    body.dark-mode .notes-box {
+      background: #020617;
+      border-color: #1f2937;
+    }
+
+    body.dark-mode input[type="number"],
+    body.dark-mode input[type="date"],
+    body.dark-mode input[type="email"],
+    body.dark-mode input[type="password"],
+    body.dark-mode textarea {
+      background-color: #020617;
+      color: var(--text-main);
+      border-color: #334155;
+    }
+
+    body.dark-mode .nav-tab {
+      background: #020617;
+      border-color: #334155;
+      color: var(--text-main);
+    }
+
+    body.dark-mode .nav-tab.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    body.dark-mode .top-bar {
+      background: #020617;
+      border: 1px solid #1f2937;
+    }
+
+    body.dark-mode .side-menu {
+      background: #0b1120;
+    }
+
+    body.dark-mode .chip {
+      background: rgba(15,23,42,0.9);
+      color: var(--text-main);
+    }
+
+    /* Donation prompt */
+
+    .donation-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 18px 12px;
+      z-index: 1200;
+    }
+
+    .donation-overlay.open { display: flex; }
+
+    .donation-card {
+      max-width: 420px;
+      width: 100%;
+      background: var(--card-bg);
+      border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.4);
+      padding: 14px 16px 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    .donation-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .donation-title {
+      font-size: 0.98rem;
+      font-weight: 600;
+    }
+
+    .donation-body {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .donation-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .donate-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(79, 140, 255, 0.35);
+    }
+
+    .donate-secondary { background: #ffffff; }
+    .donate-muted {
+      background: transparent;
+      border: 1px dashed #d2dde8;
+      font-size: 0.8rem;
+    }
+
+    /* Toast notification */
+
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--card-bg);
+      padding: 8px 14px;
+      border-radius: 999px;
+      box-shadow: var(--shadow-soft);
+      font-size: 0.85rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      z-index: 2000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 16px 10px; }
+      h1 { font-size: 1.45rem; }
+      .card { padding: 14px 14px 17px; }
+      .ring-circle { width: 72px; height: 72px; }
+      .ring-inner { width: 52px; height: 52px; }
+      .login-title { font-size: 1.7rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- LOGIN PAGE -->
+    <div id="loginPage" class="login-page">
+      <div class="login-card">
+        <h1 class="login-title">VSG BUDDY</h1>
+        <p class="login-subtitle">YOUR NEW FRIEND, FOR THE NEW YOU!</p>
+
+        <label for="authEmail">Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com">
+
+        <label for="authPassword">Password</label>
+        <input type="password" id="authPassword" placeholder="••••••••">
+
+        <div class="button-row">
+          <button id="loginBtn" type="button">🔐 Log In</button>
+          <button id="registerBtn" type="button">✨ Create Account</button>
+        </div>
+
+        <p class="login-hint">
+          Your logs (water, protein, weight, walking) are safely stored in your VSG Buddy account.
+        </p>
+      </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="appMain" style="display:none;">
+
+      <!-- Top bar + slide-out menu -->
+      <div class="top-bar">
+        <div class="top-bar-left">
+          <div class="brand-logo">
+            <div class="brand-icon">
+              <div class="brand-icon-inner">
+                💧
+                <span class="icon-heart">❤</span>
+              </div>
+            </div>
+            <div class="brand-text-block">
+              <span class="brand-name">VSG Buddy</span>
+              <span class="brand-tagline">Your new friend, for the new you</span>
+            </div>
+          </div>
+        </div>
+        <div class="top-bar-right">
+          <span id="topAuthStatus" class="top-auth-text">Guest mode</span>
+          <button id="menuToggle" class="menu-btn" type="button">☰</button>
+        </div>
+      </div>
+
+      <nav id="sideMenu" class="side-menu">
+        <div class="side-menu-header">
+          <span>VSG Buddy Menu</span>
+          <button id="closeMenuBtn" class="close-menu-btn" type="button">✕</button>
+        </div>
+        <ul class="side-menu-list">
+          <li class="side-menu-item">
+            <span class="side-menu-label">Socials</span>
+            <div class="side-menu-links">
+              <a href="https://tiktok.com" target="_blank">TikTok</a>
+              <a href="https://instagram.com" target="_blank">Instagram</a>
+              <a href="https://facebook.com" target="_blank">Facebook</a>
+            </div>
+          </li>
+          <li class="side-menu-item">
+            <span class="side-menu-label">Support Links</span>
+            <div class="side-menu-links">
+              <a href="https://www.obesityhelp.com/forums/vsg/" target="_blank">VSG Community</a>
+              <a href="mailto:you@example.com">Contact Support</a>
+            </div>
+          </li>
+          <li class="side-menu-item">
+            <span class="side-menu-label">Donate</span>
+            <div class="side-menu-links">
+              <a href="https://buymeacoffee.com/vsg.buddy" target="_blank">Support VSG Buddy</a>
+            </div>
+          </li>
+          <li class="side-menu-item">
+            <span class="side-menu-label">Account</span>
+            <div class="side-menu-links">
+              <span id="sideAuthStatus" class="side-auth-status">Not signed in</span>
+              <button id="logoutBtn" class="side-logout-btn" type="button">Log Out</button>
+            </div>
+          </li>
+        </ul>
+      </nav>
+
+      <header class="app-header">
+        <h1>VSG Buddy</h1>
+        <p class="tagline">Gentle reminders to fuel, move, and heal after VSG.</p>
+        <div class="chip-row">
+          <span class="chip">💧 Hydration</span>
+          <span class="chip">🍗 Protein</span>
+          <span class="chip">💊 Medication</span>
+          <span class="chip">🚶 Movement</span>
+          <span class="chip">⚖️ Weight</span>
+        </div>
+      </header>
+
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-target="homePage">Home</button>
+        <button class="nav-tab" data-target="quotePage">Quote of the Day</button>
+        <button class="nav-tab" data-target="affirmationsPage">Affirmations</button>
+        <button class="nav-tab" data-target="productsPage">Recommended Products</button>
+        <button class="nav-tab" data-target="progressPage">Progress Report</button>
+      </nav>
+
+      <!-- HOME PAGE -->
+      <div id="homePage" class="page">
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Today’s Checklist</div>
+              <div class="card-subtitle">Track your VSG habits one day at a time.</div>
+            </div>
+          </div>
+
+          <label for="date">Date</label>
+          <input type="date" id="date">
+
+          <div class="inline-row">
+            <div class="field">
+              <label for="water">Water (oz)</label>
+              <input type="number" id="water" min="0" placeholder="e.g., 64">
+            </div>
+            <div class="field">
+              <label for="protein">Protein (g)</label>
+              <input type="number" id="protein" min="0" placeholder="e.g., 60">
+            </div>
+          </div>
+
+          <div class="inline-row">
+            <div class="field">
+              <label for="weight">Weight (lbs)</label>
+              <input type="number" id="weight" min="0" placeholder="e.g., 260">
+            </div>
+            <div class="field">
+              <label for="walk">Walk (minutes)</label>
+              <input type="number" id="walk" min="0" placeholder="e.g., 20">
+            </div>
+          </div>
+
+          <!-- Progress rings -->
+          <div class="ring-row">
+            <div class="ring">
+              <div class="ring-circle" id="waterRingCircle">
+                <div class="ring-inner">
+                  <div class="ring-main" id="waterRingPercent">0%</div>
+                  <div class="ring-caption">Water</div>
+                </div>
+              </div>
+            </div>
+            <div class="ring">
+              <div class="ring-circle" id="proteinRingCircle">
+                <div class="ring-inner">
+                  <div class="ring-main" id="proteinRingPercent">0%</div>
+                  <div class="ring-caption">Protein</div>
+                </div>
+              </div>
+            </div>
+            <div class="ring">
+              <div class="ring-circle" id="walkRingCircle">
+                <div class="ring-inner">
+                  <div class="ring-main" id="walkRingPercent">0%</div>
+                  <div class="ring-caption">Walk</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="checkbox-row">
+            <input type="checkbox" id="meds">
+            <label for="meds">I took all my prescribed medicine today</label>
+          </div>
+
+          <label for="notes">Notes (how you feel, any wins or struggles)</label>
+          <textarea id="notes" placeholder="e.g., Felt sore but proud I hit my water goal."></textarea>
+
+          <div class="button-row">
+            <button id="saveBtn">💾 Save Day</button>
+            <button id="clearBtn">🗑 Clear This Day</button>
+            <button id="goToProgressBtn" type="button">📈 View Progress Report</button>
+          </div>
+
+          <p class="hint">
+            You’re signed in, so your progress is saved to your VSG Buddy account.
+          </p>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Daily Summary</div>
+              <div class="card-subtitle">A snapshot of how you’re doing today.</div>
+            </div>
+          </div>
+          <div id="summary">
+            <p class="notes-empty">No data saved for this date yet.</p>
+          </div>
+        </section>
+
+        <!-- Appearance / Themes -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Appearance</div>
+              <div class="card-subtitle">Choose a theme that matches your vibe.</div>
+            </div>
+          </div>
+          <div class="theme-buttons">
+            <button type="button" class="theme-btn" data-theme="calm">Calm Ocean</button>
+            <button type="button" class="theme-btn" data-theme="sunrise">Soft Sunrise</button>
+            <button type="button" class="theme-btn" data-theme="midnight">Midnight Focus</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- QUOTE PAGE -->
+      <div id="quotePage" class="page hidden">
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Quote of the Day</div>
+              <div class="card-subtitle" id="quoteDate"></div>
+            </div>
+          </div>
+          <p id="quoteText" style="font-size: 1rem; line-height: 1.6; text-align: center; margin: 12px 0;"></p>
+          <p class="hint" style="text-align:center;">
+            A fresh reminder to keep going on your journey.
+          </p>
+        </section>
+      </div>
+
+      <!-- AFFIRMATIONS PAGE -->
+      <div id="affirmationsPage" class="page hidden">
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Affirmations</div>
+              <div class="card-subtitle">Speak these over yourself today.</div>
+            </div>
+          </div>
+          <ul class="affirmation-list">
+            <li>I am healing a little more every day.</li>
+            <li>I deserve to feel healthy and energetic.</li>
+            <li>I am patient with my body and my progress.</li>
+            <li>Small choices are creating a big change.</li>
+            <li>I am proud of myself for choosing this path.</li>
+          </ul>
+        </section>
+      </div>
+
+      <!-- RECOMMENDED PRODUCTS PAGE -->
+      <div id="productsPage" class="page hidden">
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Recommended Products</div>
+              <div class="card-subtitle">Tools and treats that support your journey.</div>
+            </div>
+          </div>
+
+          <div class="product-grid" id="productGrid">
+            <div class="product-card">
+              <div class="product-name">SEEQ Clear Whey – Fruit Punch</div>
+              <div class="product-tagline">
+                Juice-like fruit punch flavor that doesn’t feel milky or heavy.
+              </div>
+              <a href="https://amzn.to/4iqLU7M"
+                 class="product-link"
+                 target="_blank"
+                 rel="noopener noreferrer">
+                View on Amazon
+              </a>
+            </div>
+
+            <div class="product-card">
+              <div class="product-name">SEEQ Clear Whey – Strawberry Lemonade</div>
+              <div class="product-tagline">
+                Light, juice-style protein with a bright strawberry lemonade flavor.
+              </div>
+              <a href="https://amzn.to/4ajrIm7"
+                 class="product-link"
+                 target="_blank"
+                 rel="noopener noreferrer">
+                View on Amazon
+              </a>
+            </div>
+
+            <div class="product-card">
+              <div class="product-name">SEEQ Clear Whey – Peach Tea</div>
+              <div class="product-tagline">
+                Peach tea taste so smooth it barely feels like a “protein shake.”
+              </div>
+              <a href="https://amzn.to/48bQfGY"
+                 class="product-link"
+                 target="_blank"
+                 rel="noopener noreferrer">
+                View on Amazon
+              </a>
+            </div>
+
+            <div class="product-card">
+              <div class="product-name">Javvy Caramel Protein Iced Coffee</div>
+              <div class="product-tagline">
+                Coffee + protein in one — caramel flavor with no added sugar.
+              </div>
+              <a href="https://amzn.to/4im1wcw"
+                 class="product-link"
+                 target="_blank"
+                 rel="noopener noreferrer">
+                View on Amazon
+              </a>
+            </div>
+
+            <div class="product-card">
+              <div class="product-name">Jordan’s Skinny Mixes – Sugar Free Vanilla Syrup</div>
+              <div class="product-tagline">
+                Zero-calorie vanilla syrup to sweeten coffee or protein without extra carbs.
+              </div>
+              <a href="https://amzn.to/4opdXWq"
+                 class="product-link"
+                 target="_blank"
+                 rel="noopener noreferrer">
+                View on Amazon
+              </a>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- PROGRESS REPORT PAGE -->
+      <div id="progressPage" class="page hidden">
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Progress Report</div>
+              <div class="card-subtitle">Your trends at a glance.</div>
+            </div>
+          </div>
+
+          <p class="hint">
+            These charts use the values you log on the Home page.
+          </p>
+
+          <h4 class="chart-title">Weight (lbs)</h4>
+          <canvas id="weightChart" height="140"></canvas>
+
+          <h4 class="chart-title">Water (oz)</h4>
+          <canvas id="waterChart" height="120"></canvas>
+
+          <h4 class="chart-title">Protein (g)</h4>
+          <canvas id="proteinChart" height="120"></canvas>
+
+          <h4 class="chart-title">Walk (minutes)</h4>
+          <canvas id="walkChart" height="120"></canvas>
+
+          <p id="noDataMsg" class="notes-empty" style="text-align:center; margin-top: 8px; display:none;">
+            No data yet. Save a few days on the Home page to see your progress.
+          </p>
+
+          <div class="button-row">
+            <button id="downloadJsonBtn" type="button">⬇️ Download My Data (PDF)</button>
+            <button id="backupJsonBtn" type="button">💾 Backup Data (JSON)</button>
+            <label class="backup-label">
+              <span>⬆️ Restore Backup</span>
+              <input id="restoreJsonInput" type="file" accept="application/json">
+            </label>
+          </div>
+
+          <div id="weeklySummary" class="weekly-card"></div>
+          <div id="streaksSummary" class="streaks-card"></div>
+
+          <div class="journey-card">
+            <div class="journey-settings">
+              <label for="surgeryDateInput">Surgery date</label>
+              <input type="date" id="surgeryDateInput">
+
+              <label for="goalWeightInput">Goal weight (lbs)</label>
+              <input type="number" id="goalWeightInput" min="0">
+
+              <div class="button-row">
+                <button id="saveJourneyBtn" type="button">📌 Save Journey Info</button>
+              </div>
+            </div>
+            <div id="journeySummary" class="journey-summary">
+              <p class="notes-empty">
+                Add your surgery date and goal weight to see your journey timeline.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div><!-- end #appMain -->
+  </div><!-- end .app-container -->
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Donation prompt overlay -->
+  <div id="donationPrompt" class="donation-overlay">
+    <div class="donation-card">
+      <div class="donation-header">
+        <div class="donation-title">Support VSG Buddy 💙</div>
+        <button id="donationCloseBtn" class="close-menu-btn" type="button" style="padding:4px 8px;font-size:0.8rem;">✕</button>
+      </div>
+      <div class="donation-body">
+        VSG Buddy is a free tool built for VSG patients. If you’d like to, you can chip in a small donation.
+        It helps keep the site online and free, improves the quality and performance of the tracker, moves us
+        closer to getting VSG Buddy on the app stores, and supports future projects we’re working on for this
+        community.
+      </div>
+      <div class="donation-buttons">
+        <button id="donationSupportBtn" class="donate-primary" type="button">
+          ☕ Support the project
+        </button>
+        <button id="donationLaterBtn" class="donate-secondary" type="button">
+          Maybe later
+        </button>
+        <button id="donationNeverBtn" class="donate-muted" type="button">
+          Don’t show this again
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <!-- Firebase + app logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDbmNydi-7z6ev2BxQfzVworASALmZegzU",
+      authDomain: "bariatric-pal.firebaseapp.com",
+      projectId: "bariatric-pal",
+      storageBucket: "bariatric-pal.firebasestorage.app",
+      messagingSenderId: "191371818386",
+      appId: "1:191371818386:web:1f3e1156cd4c4710153d4b",
+      measurementId: "G-1L2RTFDQRN"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const STORAGE_KEY = "bariatricPalData";
+    const SETTINGS_KEY = "bariatricPalSettings";
+    // New key so the donation prompt can show again even if the old one was hidden
+    const DONATE_HIDE_KEY = "vsgBuddyHideDonatePrompt_v2";
+
+    const GOALS = { water: 64, protein: 60, walk: 20 };
+
+    // DOM refs
+    const loginPage = document.getElementById("loginPage");
+    const appMain = document.getElementById("appMain");
+
+    const authEmailInput = document.getElementById("authEmail");
+    const authPasswordInput = document.getElementById("authPassword");
+    const loginBtn = document.getElementById("loginBtn");
+    const registerBtn = document.getElementById("registerBtn");
+
+    const dateInput = document.getElementById("date");
+    const waterInput = document.getElementById("water");
+    const proteinInput = document.getElementById("protein");
+    const weightInput = document.getElementById("weight");
+    const walkInput = document.getElementById("walk");
+    const medsInput = document.getElementById("meds");
+    const notesInput = document.getElementById("notes");
+
+    const saveBtn = document.getElementById("saveBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const goToProgressBtn = document.getElementById("goToProgressBtn");
+    const downloadJsonBtn = document.getElementById("downloadJsonBtn");
+    const backupJsonBtn = document.getElementById("backupJsonBtn");
+    const restoreJsonInput = document.getElementById("restoreJsonInput");
+
+    const summaryDiv = document.getElementById("summary");
+    const navTabs = document.querySelectorAll(".nav-tab");
+    const pages = document.querySelectorAll(".page");
+    const quoteText = document.getElementById("quoteText");
+    const quoteDate = document.getElementById("quoteDate");
+    const noDataMsg = document.getElementById("noDataMsg");
+
+    const menuToggle = document.getElementById("menuToggle");
+    const sideMenu = document.getElementById("sideMenu");
+    const closeMenuBtn = document.getElementById("closeMenuBtn");
+    const topAuthStatus = document.getElementById("topAuthStatus");
+    const sideAuthStatus = document.getElementById("sideAuthStatus");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    const waterRingCircle = document.getElementById("waterRingCircle");
+    const proteinRingCircle = document.getElementById("proteinRingCircle");
+    const walkRingCircle = document.getElementById("walkRingCircle");
+    const waterRingPercent = document.getElementById("waterRingPercent");
+    const proteinRingPercent = document.getElementById("proteinRingPercent");
+    const walkRingPercent = document.getElementById("walkRingPercent");
+
+    const weeklySummaryDiv = document.getElementById("weeklySummary");
+    const streaksSummaryDiv = document.getElementById("streaksSummary");
+    const surgeryDateInput = document.getElementById("surgeryDateInput");
+    const goalWeightInput = document.getElementById("goalWeightInput");
+    const saveJourneyBtn = document.getElementById("saveJourneyBtn");
+    const journeySummaryDiv = document.getElementById("journeySummary");
+
+    const themeButtons = document.querySelectorAll(".theme-btn");
+
+    const donationPrompt = document.getElementById("donationPrompt");
+    const donationCloseBtn = document.getElementById("donationCloseBtn");
+    const donationSupportBtn = document.getElementById("donationSupportBtn");
+    const donationLaterBtn = document.getElementById("donationLaterBtn");
+    const donationNeverBtn = document.getElementById("donationNeverBtn");
+
+    const toastEl = document.getElementById("toast");
+
+    let currentUser = null;
+    let weightChart, waterChart, proteinChart, walkChart;
+    let appSettings = {};
+
+    const THEMES = {
+      calm: {
+        "--bg-gradient": "linear-gradient(135deg, #e3f2fd, #e8f5e9)",
+        "--accent": "#4f8cff",
+        "--accent-soft": "#e3edff",
+        "--accent-strong": "#2f5fd6",
+        "--card-bg": "rgba(255, 255, 255, 0.95)",
+        "--text-main": "#1f2933",
+        "--text-muted": "#6b7b8c"
+      },
+      sunrise: {
+        "--bg-gradient": "linear-gradient(135deg, #ffe4e1, #fff3cd)",
+        "--accent": "#ff8c69",
+        "--accent-soft": "#ffe0d6",
+        "--accent-strong": "#e6693e",
+        "--card-bg": "rgba(255, 255, 255, 0.96)",
+        "--text-main": "#3f2a2a",
+        "--text-muted": "#8b6b5c"
+      },
+      midnight: {
+        "--bg-gradient": "linear-gradient(135deg, #020617, #111827)",
+        "--accent": "#38bdf8",
+        "--accent-soft": "#0ea5e9",
+        "--accent-strong": "#0284c7",
+        "--card-bg": "rgba(15, 23, 42, 0.96)",
+        "--text-main": "#e5e7eb",
+        "--text-muted": "#9ca3af"
+      }
+    };
+
+    function getTodayString() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const day = String(today.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function loadAllDataLocal() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) return {};
+      try { return JSON.parse(stored); } catch { return {}; }
+    }
+
+    function saveAllDataLocal(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function loadSettingsLocal() {
+      const stored = localStorage.getItem(SETTINGS_KEY);
+      if (!stored) return {};
+      try { return JSON.parse(stored); } catch { return {}; }
+    }
+
+    function saveSettingsLocal(settings) {
+      appSettings = settings;
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    }
+
+    async function loadAllDataCloud() {
+      if (!currentUser) return {};
+      const snap = await getDoc(doc(db, "users", currentUser.uid));
+      if (!snap.exists()) return {};
+      return snap.data().days || {};
+    }
+
+    async function saveAllDataCloud(data) {
+      if (!currentUser) return;
+      await setDoc(
+        doc(db, "users", currentUser.uid),
+        { days: data },
+        { merge: true }
+      );
+    }
+
+    function updateProgressRings(dayData) {
+      const water = dayData?.water || 0;
+      const protein = dayData?.protein || 0;
+      const walk = dayData?.walk || 0;
+
+      function setRing(circleEl, percentEl, value, goal) {
+        if (!circleEl || !percentEl) return;
+        const pct = goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : 0;
+        const angle = pct * 3.6;
+        circleEl.style.background =
+          `conic-gradient(var(--accent) ${angle}deg, #e5edf7 0deg)`;
+        percentEl.textContent = pct + "%";
+      }
+
+      setRing(waterRingCircle, waterRingPercent, water, GOALS.water);
+      setRing(proteinRingCircle, proteinRingPercent, protein, GOALS.protein);
+      setRing(walkRingCircle, walkRingPercent, walk, GOALS.walk);
+    }
+
+    async function loadDataForDate(dateStr) {
+      let allData = loadAllDataLocal();
+
+      if (currentUser) {
+        try {
+          const cloudData = await loadAllDataCloud();
+          allData = { ...allData, ...cloudData };
+          saveAllDataLocal(allData);
+        } catch (e) {
+          console.error("Error loading from cloud:", e);
+        }
+      }
+
+      const dayData = allData[dateStr];
+
+      if (dayData) {
+        waterInput.value = dayData.water ?? "";
+        proteinInput.value = dayData.protein ?? "";
+        weightInput.value = dayData.weight ?? "";
+        walkInput.value = dayData.walk ?? "";
+        medsInput.checked = !!dayData.meds;
+        notesInput.value = dayData.notes ?? "";
+        updateSummary(dayData);
+        updateProgressRings(dayData);
+      } else {
+        waterInput.value = "";
+        proteinInput.value = "";
+        weightInput.value = "";
+        walkInput.value = "";
+        medsInput.checked = false;
+        notesInput.value = "";
+        summaryDiv.innerHTML =
+          '<p class="notes-empty">No data saved for this date yet.</p>';
+        updateProgressRings(null);
       }
     }
 
-    const dayData = allData[dateStr];
+    function updateSummary(dayData) {
+      const medsText = dayData.meds ? "✅ Took medicine" : "⚠️ Medicine not logged";
 
-    if (dayData) {
-      waterInput.value = dayData.water ?? "";
-      proteinInput.value = dayData.protein ?? "";
-      weightInput.value = dayData.weight ?? "";
-      walkInput.value = dayData.walk ?? "";
-      medsInput.checked = !!dayData.meds;
-      notesInput.value = dayData.notes ?? "";
+      summaryDiv.innerHTML = `
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-label">Water</div>
+            <div class="summary-value">${dayData.water || 0} oz</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Protein</div>
+            <div class="summary-value">${dayData.protein || 0} g</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Weight</div>
+            <div class="summary-value">
+              ${dayData.weight != null ? dayData.weight + " lbs" : "Not logged"}
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Walk</div>
+            <div class="summary-value">${dayData.walk || 0} min</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Medication</div>
+            <div class="summary-value">${medsText}</div>
+          </div>
+        </div>
+        <div class="notes-box">
+          <strong>Notes:</strong>
+          <div class="${dayData.notes ? "" : "notes-empty"}">
+            ${dayData.notes ? dayData.notes : "No notes added for today."}
+          </div>
+        </div>
+      `;
+    }
+
+    function showPageById(id) {
+      pages.forEach(page => page.classList.add("hidden"));
+      navTabs.forEach(tab => tab.classList.remove("active"));
+
+      const pageToShow = document.getElementById(id);
+      if (pageToShow) pageToShow.classList.remove("hidden");
+
+      navTabs.forEach(tab => {
+        if (tab.dataset.target === id) tab.classList.add("active");
+      });
+
+      if (id === "progressPage") {
+        buildCharts();
+        buildWeeklySummary();
+        buildStreaksUI();
+        updateJourneySummary(appSettings, getSortedDataArray());
+      }
+    }
+
+    navTabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        const targetId = tab.dataset.target;
+        showPageById(targetId);
+      });
+    });
+
+    if (goToProgressBtn) {
+      goToProgressBtn.addEventListener("click", () => {
+        showPageById("progressPage");
+      });
+    }
+
+    // Slide menu
+    if (menuToggle && sideMenu) {
+      menuToggle.addEventListener("click", () => {
+        sideMenu.classList.add("open");
+      });
+    }
+    if (closeMenuBtn && sideMenu) {
+      closeMenuBtn.addEventListener("click", () => {
+        sideMenu.classList.remove("open");
+      });
+    }
+    document.addEventListener("click", (e) => {
+      if (!sideMenu) return;
+      const isInside = sideMenu.contains(e.target);
+      const isButton = menuToggle && menuToggle.contains(e.target);
+      if (!isInside && !isButton) sideMenu.classList.remove("open");
+    });
+
+    const quotes = [
+      "You are healing, even on the days it doesn’t feel like it.",
+      "Small steps every day add up to a big transformation.",
+      "Your future self is already proud of you.",
+      "You didn’t come this far to only come this far.",
+      "Progress, not perfection, is the goal.",
+      "Your body deserves your patience and kindness.",
+      "One day at a time, one choice at a time."
+    ];
+
+    function getQuoteOfTheDay() {
+      const today = new Date();
+      const startOfYear = new Date(today.getFullYear(), 0, 0);
+      const diff = today - startOfYear;
+      const oneDayMs = 1000 * 60 * 60 * 24;
+      const dayOfYear = Math.floor(diff / oneDayMs);
+      const index = dayOfYear % quotes.length;
+      return quotes[index];
+    }
+
+    function updateQuote() {
+      if (!quoteText || !quoteDate) return;
+      quoteText.textContent = getQuoteOfTheDay();
+      quoteDate.textContent = new Date().toLocaleDateString();
+    }
+
+    function getSortedDataArray() {
+      const allData = loadAllDataLocal();
+      const dates = Object.keys(allData).sort();
+      return dates.map(date => ({ date, ...allData[date] }));
+    }
+
+    function buildCharts() {
+      const dataArr = getSortedDataArray();
+
+      const weightPoints = dataArr.filter(d => d.weight != null && !isNaN(Number(d.weight)));
+      const waterPoints = dataArr.filter(d => d.water != null && !isNaN(Number(d.water)));
+      const proteinPoints = dataArr.filter(d => d.protein != null && !isNaN(Number(d.protein)));
+      const walkPoints = dataArr.filter(d => d.walk != null && !isNaN(Number(d.walk)));
+
+      const hasAny =
+        weightPoints.length || waterPoints.length || proteinPoints.length || walkPoints.length;
+
+      if (!hasAny) {
+        if (weightChart) { weightChart.destroy(); weightChart = null; }
+        if (waterChart) { waterChart.destroy(); waterChart = null; }
+        if (proteinChart) { proteinChart.destroy(); proteinChart = null; }
+        if (walkChart) { walkChart.destroy(); walkChart = null; }
+        if (noDataMsg) noDataMsg.style.display = "block";
+        return;
+      }
+
+      if (noDataMsg) noDataMsg.style.display = "none";
+
+      const ctxWeight = document.getElementById("weightChart").getContext("2d");
+      const ctxWater = document.getElementById("waterChart").getContext("2d");
+      const ctxProtein = document.getElementById("proteinChart").getContext("2d");
+      const ctxWalk = document.getElementById("walkChart").getContext("2d");
+
+      if (weightChart) weightChart.destroy();
+      if (waterChart) waterChart.destroy();
+      if (proteinChart) proteinChart.destroy();
+      if (walkChart) walkChart.destroy();
+
+      if (weightPoints.length) {
+        weightChart = new Chart(ctxWeight, {
+          type: "line",
+          data: {
+            labels: weightPoints.map(d => d.date),
+            datasets: [
+              { label: "Weight (lbs)", data: weightPoints.map(d => Number(d.weight)), borderWidth: 2, tension: 0.3 }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: true } },
+            scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 7 } } }
+          }
+        });
+      }
+
+      if (waterPoints.length) {
+        waterChart = new Chart(ctxWater, {
+          type: "line",
+          data: {
+            labels: waterPoints.map(d => d.date),
+            datasets: [
+              { label: "Water (oz)", data: waterPoints.map(d => Number(d.water)), borderWidth: 2, tension: 0.3 }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: true } },
+            scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 7 } } }
+          }
+        });
+      }
+
+      if (proteinPoints.length) {
+        proteinChart = new Chart(ctxProtein, {
+          type: "line",
+          data: {
+            labels: proteinPoints.map(d => d.date),
+            datasets: [
+              { label: "Protein (g)", data: proteinPoints.map(d => Number(d.protein)), borderWidth: 2, tension: 0.3 }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: true } },
+            scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 7 } } }
+          }
+        });
+      }
+
+      if (walkPoints.length) {
+        walkChart = new Chart(ctxWalk, {
+          type: "line",
+          data: {
+            labels: walkPoints.map(d => d.date),
+            datasets: [
+              { label: "Walk (min)", data: walkPoints.map(d => Number(d.walk)), borderWidth: 2, tension: 0.3 }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: true } },
+            scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 7 } } }
+          }
+        });
+      }
+    }
+
+    function buildWeeklySummary() {
+      if (!weeklySummaryDiv) return;
+      const dataArr = getSortedDataArray();
+      if (!dataArr.length) {
+        weeklySummaryDiv.innerHTML = `
+          <p class="notes-empty">
+            Log a few days on the Home page to see your weekly coach summary.
+          </p>
+        `;
+        return;
+      }
+
+      const last7 = dataArr.slice(-7);
+      const n = last7.length;
+
+      let totalWater = 0, totalProtein = 0, totalWalk = 0;
+      let bestDay = null;
+      let bestScore = -1;
+
+      last7.forEach(d => {
+        const w = Number(d.water) || 0;
+        const p = Number(d.protein) || 0;
+        const walk = Number(d.walk) || 0;
+        totalWater += w;
+        totalProtein += p;
+        totalWalk += walk;
+
+        let score = 0;
+        if (w >= GOALS.water) score++;
+        if (p >= GOALS.protein) score++;
+        if (walk >= GOALS.walk) score++;
+        if (score > bestScore) {
+          bestScore = score;
+          bestDay = d;
+        }
+      });
+
+      const avgWater = Math.round(totalWater / n);
+      const avgProtein = Math.round(totalProtein / n);
+      const avgWalk = Math.round(totalWalk / n);
+
+      let tip = "";
+      if (avgWater < GOALS.water && avgProtein < GOALS.protein) {
+        tip = "Hydration and protein both need love this week. Try sipping water all day and planning one protein-focused meal or shake.";
+      } else if (avgWater < GOALS.water) {
+        tip = "Water is a little low. Keep a bottle nearby and take a few sips every time you check your phone.";
+      } else if (avgProtein < GOALS.protein) {
+        tip = "Protein is slightly under goal. A small shake or snack can help you close the gap.";
+      } else if (avgWalk < GOALS.walk) {
+        tip = "Movement is the main opportunity. Even two 10-minute walks can make a big difference.";
+      } else {
+        tip = "You’re hitting your goals overall. Focus on staying consistent and listening to your body.";
+      }
+
+      const bestDayTxt = bestDay
+        ? `${bestDay.date} – you were especially on track.`
+        : "Keep logging to see your standout days.";
+
+      weeklySummaryDiv.innerHTML = `
+        <strong>This week’s insight</strong>
+        <ul class="weekly-list">
+          <li>Average water: <strong>${avgWater} oz</strong></li>
+          <li>Average protein: <strong>${avgProtein} g</strong></li>
+          <li>Average walk: <strong>${avgWalk} min</strong></li>
+          <li>Best day: ${bestDayTxt}</li>
+        </ul>
+        <p style="margin-top:6px;">${tip}</p>
+      `;
+    }
+
+    function computeStreaks() {
+      const allData = loadAllDataLocal();
+      const dates = Object.keys(allData).sort();
+      if (!dates.length) return null;
+
+      let currentWater = 0, bestWater = 0;
+      let currentProtein = 0, bestProtein = 0;
+      let currentWalk = 0, bestWalk = 0;
+
+      let prevDate = null;
+
+      function isConsecutive(prev, current) {
+        if (!prev) return false;
+        const prevD = new Date(prev);
+        const curD = new Date(current);
+        const diffDays = Math.round((curD - prevD) / (1000 * 60 * 60 * 24));
+        return diffDays === 1;
+      }
+
+      dates.forEach(date => {
+        const d = allData[date];
+        const meetsWater = (Number(d.water) || 0) >= GOALS.water;
+        const meetsProtein = (Number(d.protein) || 0) >= GOALS.protein;
+        const meetsWalk = (Number(d.walk) || 0) >= GOALS.walk;
+
+        const consecutive = isConsecutive(prevDate, date);
+
+        if (meetsWater) {
+          currentWater = consecutive ? currentWater + 1 : 1;
+        } else currentWater = 0;
+
+        if (meetsProtein) {
+          currentProtein = consecutive ? currentProtein + 1 : 1;
+        } else currentProtein = 0;
+
+        if (meetsWalk) {
+          currentWalk = consecutive ? currentWalk + 1 : 1;
+        } else currentWalk = 0;
+
+        bestWater = Math.max(bestWater, currentWater);
+        bestProtein = Math.max(bestProtein, currentProtein);
+        bestWalk = Math.max(bestWalk, currentWalk);
+
+        prevDate = date;
+      });
+
+      return {
+        currentWater,
+        bestWater,
+        currentProtein,
+        bestProtein,
+        currentWalk,
+        bestWalk,
+        daysLogged: dates.length
+      };
+    }
+
+    function buildStreaksUI() {
+      if (!streaksSummaryDiv) return;
+      const streaks = computeStreaks();
+      if (!streaks) {
+        streaksSummaryDiv.innerHTML = `
+          <p class="notes-empty">
+            Once you log a few days in a row, you’ll see streaks and badges here.
+          </p>
+        `;
+        return;
+      }
+
+      const {
+        currentWater,
+        bestWater,
+        currentProtein,
+        bestProtein,
+        currentWalk,
+        bestWalk,
+        daysLogged
+      } = streaks;
+
+      const badges = [];
+
+      if (bestWater >= 7) badges.push("💧 Hydration Hero (7+ days water goal)");
+      if (bestProtein >= 10) badges.push("🍗 Protein Pro (10+ days protein goal)");
+      if (bestWalk >= 14) badges.push("🚶 Moving Miracle (14+ days walk goal)");
+      if (daysLogged >= 30) badges.push("📆 30-Day Commitment");
+
+      const badgesHTML = badges.length
+        ? badges.map(b => `<span class="badge-pill">${b}</span>`).join("")
+        : '<span class="notes-empty">No badges yet – but you’re building them with every log.</span>';
+
+      streaksSummaryDiv.innerHTML = `
+        <strong>Streaks & Badges</strong>
+        <div class="streak-grid">
+          <div class="streak-item">
+            <div><strong>Water streak</strong></div>
+            <div>Current: ${currentWater} day(s)</div>
+            <div>Best: ${bestWater} day(s)</div>
+          </div>
+          <div class="streak-item">
+            <div><strong>Protein streak</strong></div>
+            <div>Current: ${currentProtein} day(s)</div>
+            <div>Best: ${bestProtein} day(s)</div>
+          </div>
+          <div class="streak-item">
+            <div><strong>Walk streak</strong></div>
+            <div>Current: ${currentWalk} day(s)</div>
+            <div>Best: ${bestWalk} day(s)</div>
+          </div>
+        </div>
+        <div class="badge-row" style="margin-top:8px;">
+          ${badgesHTML}
+        </div>
+      `;
+    }
+
+    function updateJourneySummary(settings, dataArr) {
+      if (!journeySummaryDiv) return;
+      journeySummaryDiv.innerHTML = "";
+
+      const surgeryDateStr = settings?.surgeryDate || "";
+      const goalWeight = settings?.goalWeight ? Number(settings.goalWeight) : null;
+
+      if (!surgeryDateStr || !goalWeight) {
+        journeySummaryDiv.innerHTML = `
+          <p class="notes-empty">
+            Add your surgery date and goal weight above to see milestones here.
+          </p>
+        `;
+        return;
+      }
+
+      const today = new Date();
+      const surgeryDate = new Date(surgeryDateStr);
+      const diffDays = Math.round((today - surgeryDate) / (1000 * 60 * 60 * 24));
+      const diffMonths = Math.floor(diffDays / 30);
+
+      if (!dataArr || !dataArr.length) {
+        journeySummaryDiv.innerHTML = `
+          <p><strong>${diffDays}</strong> day(s) since your surgery.</p>
+          <p class="notes-empty">
+            Start logging your weight to see how far you’ve come toward your goal.
+          </p>
+        `;
+        return;
+      }
+
+      const firstWeightEntry = dataArr.find(d => d.weight != null && !isNaN(Number(d.weight)));
+      const lastWeightEntry = [...dataArr].reverse().find(d => d.weight != null && !isNaN(Number(d.weight)));
+
+      if (!firstWeightEntry || !lastWeightEntry) {
+        journeySummaryDiv.innerHTML = `
+          <p><strong>${diffDays}</strong> day(s) since your surgery.</p>
+          <p class="notes-empty">
+            Once you log your weight, we’ll show your total pounds lost and goal progress here.
+          </p>
+        `;
+        return;
+      }
+
+      const startWeight = Number(firstWeightEntry.weight);
+      const currentWeight = Number(lastWeightEntry.weight);
+      const lost = startWeight - currentWeight;
+      const totalToGoal = startWeight - goalWeight;
+      let percentToGoal = 0;
+
+      if (totalToGoal > 0) {
+        percentToGoal = Math.max(0, Math.min(100, Math.round((lost / totalToGoal) * 100)));
+      }
+
+      let milestoneText = "";
+      if (diffDays < 30) {
+        milestoneText = "You’re in the very early healing days. Rest, hydrate, and take things slow.";
+      } else if (diffDays < 90) {
+        milestoneText = "You’re in the powerful first 3 months where habits start to build.";
+      } else if (diffDays < 180) {
+        milestoneText = "You’re moving into the long-game phase. Consistency is your superpower.";
+      } else {
+        milestoneText = "You’re deep into your journey. Look how far you’ve already come.";
+      }
+
+      journeySummaryDiv.innerHTML = `
+        <p><strong>${diffDays}</strong> day(s) since surgery (${diffMonths} month(s) approx).</p>
+        <p><strong>${lost.toFixed(1)}</strong> lbs lost from your first logged weight (${startWeight} → ${currentWeight}).</p>
+        <p>Goal weight: <strong>${goalWeight} lbs</strong></p>
+        <p>You’re about <strong>${percentToGoal}%</strong> of the way toward your goal.</p>
+        <p style="margin-top:6px;">${milestoneText}</p>
+      `;
+    }
+
+    // Toast helper
+    function showToast(message) {
+      if (!toastEl) return;
+      toastEl.textContent = message;
+      toastEl.classList.add("show");
+      setTimeout(() => {
+        toastEl.classList.remove("show");
+      }, 2200);
+    }
+
+    // Save / clear handlers
+    saveBtn.addEventListener("click", async () => {
+      if (!currentUser) {
+        alert("Please log in again to save your VSG Buddy data.");
+        return;
+      }
+
+      const dateStr = dateInput.value || getTodayString();
+
+      const dayData = {
+        water: Number(waterInput.value) || 0,
+        protein: Number(proteinInput.value) || 0,
+        weight: weightInput.value ? Number(weightInput.value) : null,
+        walk: Number(walkInput.value) || 0,
+        meds: medsInput.checked,
+        notes: notesInput.value.trim()
+      };
+
+      const allData = loadAllDataLocal();
+      allData[dateStr] = dayData;
+      saveAllDataLocal(allData);
       updateSummary(dayData);
       updateProgressRings(dayData);
-    } else {
+
+      try {
+        await saveAllDataCloud(allData);
+      } catch (e) {
+        console.error("Failed to save cloud data:", e);
+      }
+
+      buildCharts();
+      buildWeeklySummary();
+      buildStreaksUI();
+      updateJourneySummary(appSettings, getSortedDataArray());
+
+      // Clear Today's Checklist fields (keep the date selected)
       waterInput.value = "";
       proteinInput.value = "";
       weightInput.value = "";
       walkInput.value = "";
       medsInput.checked = false;
       notesInput.value = "";
-      summaryDiv.innerHTML =
-        '<p class="notes-empty">No data saved for this date yet.</p>';
-      updateProgressRings(null);
-    }
-  }
 
-  function updateSummary(dayData) {
-    const medsText = dayData.meds ? "✅ Took medicine" : "⚠️ Medicine not logged";
-
-    summaryDiv.innerHTML = `
-      <div class="summary-grid">
-        <div class="summary-item">
-          <div class="summary-label">Water</div>
-          <div class="summary-value">${dayData.water || 0} oz</div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-label">Protein</div>
-          <div class="summary-value">${dayData.protein || 0} g</div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-label">Weight</div>
-          <div class="summary-value">
-            ${dayData.weight != null ? dayData.weight + " lbs" : "Not logged"}
-          </div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-label">Walk</div>
-          <div class="summary-value">${dayData.walk || 0} min</div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-label">Medication</div>
-          <div class="summary-value">${medsText}</div>
-        </div>
-      </div>
-      <div class="notes-box">
-        <strong>Notes:</strong>
-        <div class="${dayData.notes ? "" : "notes-empty"}">
-          ${dayData.notes ? dayData.notes : "No notes added for today."}
-        </div>
-      </div>
-    `;
-  }
-
-  function showPageById(id) {
-    pages.forEach(page => page.classList.add("hidden"));
-    navTabs.forEach(tab => tab.classList.remove("active"));
-
-    const pageToShow = document.getElementById(id);
-    if (pageToShow) pageToShow.classList.remove("hidden");
-
-    navTabs.forEach(tab => {
-      if (tab.dataset.target === id) tab.classList.add("active");
+      showToast("Saved your VSG Buddy log for " + dateStr + "!");
     });
 
-    if (id === "progressPage") {
-      buildCharts();
-      buildWeeklySummary();
-      buildStreaksUI();
-      updateJourneySummary(appSettings, getSortedDataArray());
-    }
-  }
-
-  navTabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-      const targetId = tab.dataset.target;
-      showPageById(targetId);
-    });
-  });
-
-  if (goToProgressBtn) {
-    goToProgressBtn.addEventListener("click", () => {
-      showPageById("progressPage");
-    });
-  }
-
-  // Slide menu
-  if (menuToggle && sideMenu) {
-    menuToggle.addEventListener("click", () => {
-      sideMenu.classList.add("open");
-    });
-  }
-  if (closeMenuBtn && sideMenu) {
-    closeMenuBtn.addEventListener("click", () => {
-      sideMenu.classList.remove("open");
-    });
-  }
-  document.addEventListener("click", (e) => {
-    if (!sideMenu) return;
-    const isInside = sideMenu.contains(e.target);
-    const isButton = menuToggle && menuToggle.contains(e.target);
-    if (!isInside && !isButton) sideMenu.classList.remove("open");
-  });
-
-  const quotes = [
-    "You are healing, even on the days it doesn’t feel like it.",
-    "Small steps every day add up to a big transformation.",
-    "Your future self is already proud of you.",
-    "You didn’t come this far to only come this far.",
-    "Progress, not perfection, is the goal.",
-    "Your body deserves your patience and kindness.",
-    "One day at a time, one choice at a time."
-  ];
-
-  function getQuoteOfTheDay() {
-    const today = new Date();
-    const startOfYear = new Date(today.getFullYear(), 0, 0);
-    const diff = today - startOfYear;
-    const oneDayMs = 1000 * 60 * 60 * 24;
-    const dayOfYear = Math.floor(diff / oneDayMs);
-    const index = dayOfYear % quotes.length;
-    return quotes[index];
-  }
-
-  function updateQuote() {
-    if (!quoteText || !quoteDate) return;
-    quoteText.textContent = getQuoteOfTheDay();
-    quoteDate.textContent = new Date().toLocaleDateString();
-  }
-
-  function getSortedDataArray() {
-    const allData = loadAllDataLocal();
-    const dates = Object.keys(allData).sort();
-    return dates.map(date => ({ date, ...allData[date] }));
-  }
-
-  function buildCharts() {
-    const dataArr = getSortedDataArray();
-
-    const weightPoints = dataArr.filter(d => d.weight != null && !isNaN(Number(d.weight)));
-    const waterPoints = dataArr.filter(d => d.water != null && !isNaN(Number(d.water)));
-    const proteinPoints = dataArr.filter(d => d.protein != null && !isNaN(Number(d.protein)));
-    const walkPoints = dataArr.filter(d => d.walk != null && !isNaN(Number(d.walk)));
-
-    const hasAny =
-      weightPoints.length || waterPoints.length || proteinPoints.length || walkPoints.length;
-
-    if (!hasAny) {
-      if (weightChart) { weightChart.destroy(); weightChart = null; }
-      if (waterChart) { waterChart.destroy(); waterChart = null; }
-      if (proteinChart) { proteinChart.destroy(); proteinChart = null; }
-      if (walkChart) { walkChart.destroy(); walkChart = null; }
-      if (noDataMsg) noDataMsg.style.display = "block";
-      return;
-    }
-
-    if (noDataMsg) noDataMsg.style.display = "none";
-
-    const ctxWeight = document.getElementById("weightChart").getContext("2d");
-    const ctxWater = document.getElementById("waterChart").getContext("2d");
-    const ctxProtein = document.getElementById("proteinChart").getContext("2d");
-    const ctxWalk = document.getElementById("walkChart").getContext("2d");
-
-    if (weightChart) weightChart.destroy();
-    if (waterChart) weightChart = null;
-    if (proteinChart) proteinChart.destroy();
-    if (walkChart) walkChart.destroy();
-
-    if (weightPoints.length) {
-      weightChart = new Chart(ctxWeight, {
-        type: "line",
-        data: {
-          labels: weightPoints.map(d => d.date),
-          datasets: [
-            { label: "Weight (lbs)", data: weightPoints.map(d => Number(d.weight)), borderWidth: 2, tension: 0.3 }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: true } },
-          scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 7 } } }
-        }
-      });
-    }
-
-    if (waterPoints.length) {
-      waterChart = new Chart(ctxWater, {
-        type: "line",
-        data: {
-          labels: waterPoints.map(d => d.date),
-          datasets: [
-            { label: "Water (oz)", data: waterPoints.map(d => Number(d.water)), borderWidth: 2, tension: 0.3 }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: true } },
-          scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 7 } } }
-        }
-      });
-    }
-
-    if (proteinPoints.length) {
-      proteinChart = new Chart(ctxProtein, {
-        type: "line",
-        data: {
-          labels: proteinPoints.map(d => d.date),
-          datasets: [
-            { label: "Protein (g)", data: proteinPoints.map(d => Number(d.protein)), borderWidth: 2, tension: 0.3 }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: true } },
-          scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 7 } } }
-        }
-      });
-    }
-
-    if (walkPoints.length) {
-      walkChart = new Chart(ctxWalk, {
-        type: "line",
-        data: {
-          labels: walkPoints.map(d => d.date),
-          datasets: [
-            { label: "Walk (min)", data: walkPoints.map(d => Number(d.walk)), borderWidth: 2, tension: 0.3 }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: true } },
-          scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 7 } } }
-        }
-      });
-    }
-  }
-
-  function buildWeeklySummary() {
-    if (!weeklySummaryDiv) return;
-    const dataArr = getSortedDataArray();
-    if (!dataArr.length) {
-      weeklySummaryDiv.innerHTML = `
-        <p class="notes-empty">
-          Log a few days on the Home page to see your weekly coach summary.
-        </p>
-      `;
-      return;
-    }
-
-    const last7 = dataArr.slice(-7);
-    const n = last7.length;
-
-    let totalWater = 0, totalProtein = 0, totalWalk = 0;
-    let bestDay = null;
-    let bestScore = -1;
-
-    last7.forEach(d => {
-      const w = Number(d.water) || 0;
-      const p = Number(d.protein) || 0;
-      const walk = Number(d.walk) || 0;
-      totalWater += w;
-      totalProtein += p;
-      totalWalk += walk;
-
-      let score = 0;
-      if (w >= GOALS.water) score++;
-      if (p >= GOALS.protein) score++;
-      if (walk >= GOALS.walk) score++;
-      if (score > bestScore) {
-        bestScore = score;
-        bestDay = d;
-      }
-    });
-
-    const avgWater = Math.round(totalWater / n);
-    const avgProtein = Math.round(totalProtein / n);
-    const avgWalk = Math.round(totalWalk / n);
-
-    let tip = "";
-    if (avgWater < GOALS.water && avgProtein < GOALS.protein) {
-      tip = "Hydration and protein both need love this week. Try sipping water all day and planning one protein-focused meal or shake.";
-    } else if (avgWater < GOALS.water) {
-      tip = "Water is a little low. Keep a bottle nearby and take a few sips every time you check your phone.";
-    } else if (avgProtein < GOALS.protein) {
-      tip = "Protein is slightly under goal. A small shake or snack can help you close the gap.";
-    } else if (avgWalk < GOALS.walk) {
-      tip = "Movement is the main opportunity. Even two 10-minute walks can make a big difference.";
-    } else {
-      tip = "You’re hitting your goals overall. Focus on staying consistent and listening to your body.";
-    }
-
-    const bestDayTxt = bestDay
-      ? `${bestDay.date} – you were especially on track.`
-      : "Keep logging to see your standout days.";
-
-    weeklySummaryDiv.innerHTML = `
-      <strong>This week’s insight</strong>
-      <ul class="weekly-list">
-        <li>Average water: <strong>${avgWater} oz</strong></li>
-        <li>Average protein: <strong>${avgProtein} g</strong></li>
-        <li>Average walk: <strong>${avgWalk} min</strong></li>
-        <li>Best day: ${bestDayTxt}</li>
-      </ul>
-      <p style="margin-top:6px;">${tip}</p>
-    `;
-  }
-
-  function computeStreaks() {
-    const allData = loadAllDataLocal();
-    const dates = Object.keys(allData).sort();
-    if (!dates.length) return null;
-
-    let currentWater = 0, bestWater = 0;
-    let currentProtein = 0, bestProtein = 0;
-    let currentWalk = 0, bestWalk = 0;
-
-    let prevDate = null;
-
-    function isConsecutive(prev, current) {
-      if (!prev) return false;
-      const prevD = new Date(prev);
-      const curD = new Date(current);
-      const diffDays = Math.round((curD - prevD) / (1000 * 60 * 60 * 24));
-      return diffDays === 1;
-    }
-
-    dates.forEach(date => {
-      const d = allData[date];
-      const meetsWater = (Number(d.water) || 0) >= GOALS.water;
-      const meetsProtein = (Number(d.protein) || 0) >= GOALS.protein;
-      const meetsWalk = (Number(d.walk) || 0) >= GOALS.walk;
-
-      const consecutive = isConsecutive(prevDate, date);
-
-      if (meetsWater) {
-        currentWater = consecutive ? currentWater + 1 : 1;
-      } else currentWater = 0;
-
-      if (meetsProtein) {
-        currentProtein = consecutive ? currentProtein + 1 : 1;
-      } else currentProtein = 0;
-
-      if (meetsWalk) {
-        currentWalk = consecutive ? currentWalk + 1 : 1;
-      } else currentWalk = 0;
-
-      bestWater = Math.max(bestWater, currentWater);
-      bestProtein = Math.max(bestProtein, currentProtein);
-      bestWalk = Math.max(bestWalk, currentWalk);
-
-      prevDate = date;
-    });
-
-    return {
-      currentWater,
-      bestWater,
-      currentProtein,
-      bestProtein,
-      currentWalk,
-      bestWalk,
-      daysLogged: dates.length
-    };
-  }
-
-  function buildStreaksUI() {
-    if (!streaksSummaryDiv) return;
-    const streaks = computeStreaks();
-    if (!streaks) {
-      streaksSummaryDiv.innerHTML = `
-        <p class="notes-empty">
-          Once you log a few days in a row, you’ll see streaks and badges here.
-        </p>
-      `;
-      return;
-    }
-
-    const {
-      currentWater,
-      bestWater,
-      currentProtein,
-      bestProtein,
-      currentWalk,
-      bestWalk,
-      daysLogged
-    } = streaks;
-
-    const badges = [];
-
-    if (bestWater >= 7) badges.push("💧 Hydration Hero (7+ days water goal)");
-    if (bestProtein >= 10) badges.push("🍗 Protein Pro (10+ days protein goal)");
-    if (bestWalk >= 14) badges.push("🚶 Moving Miracle (14+ days walk goal)");
-    if (daysLogged >= 30) badges.push("📆 30-Day Commitment");
-
-    const badgesHTML = badges.length
-      ? badges.map(b => `<span class="badge-pill">${b}</span>`).join("")
-      : '<span class="notes-empty">No badges yet – but you’re building them with every log.</span>';
-
-    streaksSummaryDiv.innerHTML = `
-      <strong>Streaks & Badges</strong>
-      <div class="streak-grid">
-        <div class="streak-item">
-          <div><strong>Water streak</strong></div>
-          <div>Current: ${currentWater} day(s)</div>
-          <div>Best: ${bestWater} day(s)</div>
-        </div>
-        <div class="streak-item">
-          <div><strong>Protein streak</strong></div>
-          <div>Current: ${currentProtein} day(s)</div>
-          <div>Best: ${bestProtein} day(s)</div>
-        </div>
-        <div class="streak-item">
-          <div><strong>Walk streak</strong></div>
-          <div>Current: ${currentWalk} day(s)</div>
-          <div>Best: ${bestWalk} day(s)</div>
-        </div>
-      </div>
-      <div class="badge-row" style="margin-top:8px;">
-        ${badgesHTML}
-      </div>
-    `;
-  }
-
-  function updateJourneySummary(settings, dataArr) {
-    if (!journeySummaryDiv) return;
-    journeySummaryDiv.innerHTML = "";
-
-    const surgeryDateStr = settings?.surgeryDate || "";
-    const goalWeight = settings?.goalWeight ? Number(settings.goalWeight) : null;
-
-    if (!surgeryDateStr || !goalWeight) {
-      journeySummaryDiv.innerHTML = `
-        <p class="notes-empty">
-          Add your surgery date and goal weight above to see milestones here.
-        </p>
-      `;
-      return;
-    }
-
-    const today = new Date();
-    const surgeryDate = new Date(surgeryDateStr);
-    const diffDays = Math.round((today - surgeryDate) / (1000 * 60 * 60 * 24));
-    const diffMonths = Math.floor(diffDays / 30);
-
-    if (!dataArr || !dataArr.length) {
-      journeySummaryDiv.innerHTML = `
-        <p><strong>${diffDays}</strong> day(s) since your surgery.</p>
-        <p class="notes-empty">
-          Start logging your weight to see how far you’ve come toward your goal.
-        </p>
-      `;
-      return;
-    }
-
-    const firstWeightEntry = dataArr.find(d => d.weight != null && !isNaN(Number(d.weight)));
-    const lastWeightEntry = [...dataArr].reverse().find(d => d.weight != null && !isNaN(Number(d.weight)));
-
-    if (!firstWeightEntry || !lastWeightEntry) {
-      journeySummaryDiv.innerHTML = `
-        <p><strong>${diffDays}</strong> day(s) since your surgery.</p>
-        <p class="notes-empty">
-          Once you log your weight, we’ll show your total pounds lost and goal progress here.
-        </p>
-      `;
-      return;
-    }
-
-    const startWeight = Number(firstWeightEntry.weight);
-    const currentWeight = Number(lastWeightEntry.weight);
-    const lost = startWeight - currentWeight;
-    const totalToGoal = startWeight - goalWeight;
-    let percentToGoal = 0;
-
-    if (totalToGoal > 0) {
-      percentToGoal = Math.max(0, Math.min(100, Math.round((lost / totalToGoal) * 100)));
-    }
-
-    let milestoneText = "";
-    if (diffDays < 30) {
-      milestoneText = "You’re in the very early healing days. Rest, hydrate, and take things slow.";
-    } else if (diffDays < 90) {
-      milestoneText = "You’re in the powerful first 3 months where habits start to build.";
-    } else if (diffDays < 180) {
-      milestoneText = "You’re moving into the long-game phase. Consistency is your superpower.";
-    } else {
-      milestoneText = "You’re deep into your journey. Look how far you’ve already come.";
-    }
-
-    journeySummaryDiv.innerHTML = `
-      <p><strong>${diffDays}</strong> day(s) since surgery (${diffMonths} month(s) approx).</p>
-      <p><strong>${lost.toFixed(1)}</strong> lbs lost from your first logged weight (${startWeight} → ${currentWeight}).</p>
-      <p>Goal weight: <strong>${goalWeight} lbs</strong></p>
-      <p>You’re about <strong>${percentToGoal}%</strong> of the way toward your goal.</p>
-      <p style="margin-top:6px;">${milestoneText}</p>
-    `;
-  }
-
-  // Toast helper
-  function showToast(message) {
-    if (!toastEl) return;
-    toastEl.textContent = message;
-    toastEl.classList.add("show");
-    setTimeout(() => {
-      toastEl.classList.remove("show");
-    }, 2200);
-  }
-
-  // Save / clear handlers
-  saveBtn.addEventListener("click", async () => {
-    if (!currentUser) {
-      alert("Please log in again to save your VSG Buddy data.");
-      return;
-    }
-
-    const dateStr = dateInput.value || getTodayString();
-
-    const dayData = {
-      water: Number(waterInput.value) || 0,
-      protein: Number(proteinInput.value) || 0,
-      weight: weightInput.value ? Number(weightInput.value) : null,
-      walk: Number(walkInput.value) || 0,
-      meds: medsInput.checked,
-      notes: notesInput.value.trim()
-    };
-
-    const allData = loadAllDataLocal();
-    allData[dateStr] = dayData;
-    saveAllDataLocal(allData);
-    updateSummary(dayData);
-    updateProgressRings(dayData);
-
-    try {
-      await saveAllDataCloud(allData);
-    } catch (e) {
-      console.error("Failed to save cloud data:", e);
-    }
-
-    buildCharts();
-    buildWeeklySummary();
-    buildStreaksUI();
-    updateJourneySummary(appSettings, getSortedDataArray());
-
-    // Clear Today's Checklist fields (keep the date selected)
-    waterInput.value = "";
-    proteinInput.value = "";
-    weightInput.value = "";
-    walkInput.value = "";
-    medsInput.checked = false;
-    notesInput.value = "";
-
-    showToast("Saved your VSG Buddy log for " + dateStr + "!");
-  });
-
-  clearBtn.addEventListener("click", async () => {
-    const dateStr = dateInput.value || getTodayString();
-    const allData = loadAllDataLocal();
-
-    if (allData[dateStr]) {
-      if (confirm("Are you sure you want to delete this day's data?")) {
-        delete allData[dateStr];
-        saveAllDataLocal(allData);
-
-        if (currentUser) {
-          try {
-            await saveAllDataCloud(allData);
-          } catch (e) {
-            console.error("Failed to update cloud after delete:", e);
-          }
-        }
-
-        await loadDataForDate(dateStr);
-        buildCharts();
-        buildWeeklySummary();
-        buildStreaksUI();
-        updateJourneySummary(appSettings, getSortedDataArray());
-        showToast("Cleared data for " + dateStr);
-      }
-    } else {
-      showToast("No data to clear for this date.");
-    }
-  });
-
-  dateInput.addEventListener("change", async () => {
-    const dateStr = dateInput.value;
-    if (dateStr) await loadDataForDate(dateStr);
-  });
-
-  // PDF export
-  if (downloadJsonBtn) {
-    downloadJsonBtn.addEventListener("click", () => {
+    clearBtn.addEventListener("click", async () => {
+      const dateStr = dateInput.value || getTodayString();
       const allData = loadAllDataLocal();
-      const dates = Object.keys(allData).sort();
 
-      if (!dates.length) {
-        alert("No data to export yet.");
-        return;
-      }
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      doc.setFontSize(16);
-      doc.text("VSG Buddy Progress Report", 105, 12, { align: "center" });
-
-      doc.setFontSize(10);
-      let y = 22;
-
-      dates.forEach((date) => {
-        const d = allData[date];
-
-        const line = `${date} – ` +
-          `W: ${d.weight != null ? d.weight : "-"} lbs | ` +
-          `Water: ${d.water ?? 0} oz | ` +
-          `Protein: ${d.protein ?? 0} g | ` +
-          `Walk: ${d.walk ?? 0} min | ` +
-          `Meds: ${d.meds ? "Yes" : "No"}`;
-
-        if (y > 280) {
-          doc.addPage();
-          y = 20;
-        }
-
-        doc.text(line, 10, y);
-        y += 7;
-      });
-
-      doc.save("vsg-buddy-report.pdf");
-    });
-  }
-
-  // Backup / restore JSON
-  if (backupJsonBtn) {
-    backupJsonBtn.addEventListener("click", () => {
-      const allData = loadAllDataLocal();
-      const keys = Object.keys(allData);
-      if (!keys.length) {
-        alert("No data to backup yet.");
-        return;
-      }
-
-      const json = JSON.stringify(allData, null, 2);
-      const blob = new Blob([json], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "vsg-buddy-backup.json";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
-  }
-
-  if (restoreJsonInput) {
-    restoreJsonInput.addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const imported = JSON.parse(e.target.result);
-          if (typeof imported !== "object" || imported === null || Array.isArray(imported)) {
-            throw new Error("Invalid format");
-          }
-
-          const existing = loadAllDataLocal();
-          const merged = { ...existing, ...imported };
-          saveAllDataLocal(merged);
+      if (allData[dateStr]) {
+        if (confirm("Are you sure you want to delete this day's data?")) {
+          delete allData[dateStr];
+          saveAllDataLocal(allData);
 
           if (currentUser) {
             try {
-              await saveAllDataCloud(merged);
-            } catch (err) {
-              console.error("Failed to sync restored data to cloud:", err);
+              await saveAllDataCloud(allData);
+            } catch (e) {
+              console.error("Failed to update cloud after delete:", e);
             }
           }
 
-          alert("Backup restored! Your data has been merged.");
-          const current = dateInput.value || getTodayString();
-          await loadDataForDate(current);
+          await loadDataForDate(dateStr);
           buildCharts();
           buildWeeklySummary();
           buildStreaksUI();
           updateJourneySummary(appSettings, getSortedDataArray());
-        } catch (err) {
-          console.error(err);
-          alert("That file doesn't look like a valid VSG Buddy backup.");
-        } finally {
-          restoreJsonInput.value = "";
+          showToast("Cleared data for " + dateStr);
         }
-      };
-      reader.readAsText(file);
-    });
-  }
-
-  // AUTH HANDLERS
-  loginBtn.addEventListener("click", async () => {
-    const email = authEmailInput.value.trim();
-    const pass = authPasswordInput.value.trim();
-    if (!email || !pass) {
-      alert("Enter email and password.");
-      return;
-    }
-    try {
-      await signInWithEmailAndPassword(auth, email, pass);
-    } catch (e) {
-      console.error(e);
-      alert("Login failed: " + e.message);
-    }
-  });
-
-  registerBtn.addEventListener("click", async () => {
-    const email = authEmailInput.value.trim();
-    const pass = authPasswordInput.value.trim();
-    if (!email || !pass) {
-      alert("Enter email and password.");
-      return;
-    }
-    try {
-      await createUserWithEmailAndPassword(auth, email, pass);
-      alert("Account created and logged in!");
-    } catch (e) {
-      console.error(e);
-      alert("Registration failed: " + e.message);
-    }
-  });
-
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-      } catch (e) {
-        console.error(e);
-        alert("Logout failed: " + e.message);
+      } else {
+        showToast("No data to clear for this date.");
       }
     });
-  }
 
-  function applyTheme(themeName) {
-    const theme = THEMES[themeName] || THEMES.calm;
-    const root = document.documentElement;
-    Object.entries(theme).forEach(([key, value]) => {
-      root.style.setProperty(key, value);
+    dateInput.addEventListener("change", async () => {
+      const dateStr = dateInput.value;
+      if (dateStr) await loadDataForDate(dateStr);
     });
 
-    if (themeName === "midnight") {
-      document.body.classList.add("dark-mode");
-    } else {
-      document.body.classList.remove("dark-mode");
+    // PDF export
+    if (downloadJsonBtn) {
+      downloadJsonBtn.addEventListener("click", () => {
+        const allData = loadAllDataLocal();
+        const dates = Object.keys(allData).sort();
+
+        if (!dates.length) {
+          alert("No data to export yet.");
+          return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(16);
+        doc.text("VSG Buddy Progress Report", 105, 12, { align: "center" });
+
+        doc.setFontSize(10);
+        let y = 22;
+
+        dates.forEach((date) => {
+          const d = allData[date];
+
+          const line = `${date} – ` +
+            `W: ${d.weight != null ? d.weight : "-"} lbs | ` +
+            `Water: ${d.water ?? 0} oz | ` +
+            `Protein: ${d.protein ?? 0} g | ` +
+            `Walk: ${d.walk ?? 0} min | ` +
+            `Meds: ${d.meds ? "Yes" : "No"}`;
+
+          if (y > 280) {
+            doc.addPage();
+            y = 20;
+          }
+
+          doc.text(line, 10, y);
+          y += 7;
+        });
+
+        doc.save("vsg-buddy-report.pdf");
+      });
+    }
+
+    // Backup / restore JSON
+    if (backupJsonBtn) {
+      backupJsonBtn.addEventListener("click", () => {
+        const allData = loadAllDataLocal();
+        const keys = Object.keys(allData);
+        if (!keys.length) {
+          alert("No data to backup yet.");
+          return;
+        }
+
+        const json = JSON.stringify(allData, null, 2);
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "vsg-buddy-backup.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    if (restoreJsonInput) {
+      restoreJsonInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const imported = JSON.parse(e.target.result);
+            if (typeof imported !== "object" || imported === null || Array.isArray(imported)) {
+              throw new Error("Invalid format");
+            }
+
+            const existing = loadAllDataLocal();
+            const merged = { ...existing, ...imported };
+            saveAllDataLocal(merged);
+
+            if (currentUser) {
+              try {
+                await saveAllDataCloud(merged);
+              } catch (err) {
+                console.error("Failed to sync restored data to cloud:", err);
+              }
+            }
+
+            alert("Backup restored! Your data has been merged.");
+            const current = dateInput.value || getTodayString();
+            await loadDataForDate(current);
+            buildCharts();
+            buildWeeklySummary();
+            buildStreaksUI();
+            updateJourneySummary(appSettings, getSortedDataArray());
+          } catch (err) {
+            console.error(err);
+            alert("That file doesn't look like a valid VSG Buddy backup.");
+          } finally {
+            restoreJsonInput.value = "";
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    // AUTH HANDLERS
+    loginBtn.addEventListener("click", async () => {
+      const email = authEmailInput.value.trim();
+      const pass = authPasswordInput.value.trim();
+      if (!email || !pass) {
+        alert("Enter email and password.");
+        return;
+      }
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (e) {
+        console.error(e);
+        alert("Login failed: " + e.message);
+      }
+    });
+
+    registerBtn.addEventListener("click", async () => {
+      const email = authEmailInput.value.trim();
+      const pass = authPasswordInput.value.trim();
+      if (!email || !pass) {
+        alert("Enter email and password.");
+        return;
+      }
+      try {
+        await createUserWithEmailAndPassword(auth, email, pass);
+        alert("Account created and logged in!");
+      } catch (e) {
+        console.error(e);
+        alert("Registration failed: " + e.message);
+      }
+    });
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+        try {
+          await signOut(auth);
+        } catch (e) {
+          console.error(e);
+          alert("Logout failed: " + e.message);
+        }
+      });
+    }
+
+    function applyTheme(themeName) {
+      const theme = THEMES[themeName] || THEMES.calm;
+      const root = document.documentElement;
+      Object.entries(theme).forEach(([key, value]) => {
+        root.style.setProperty(key, value);
+      });
+
+      if (themeName === "midnight") {
+        document.body.classList.add("dark-mode");
+      } else {
+        document.body.classList.remove("dark-mode");
+      }
+
+      themeButtons.forEach(btn => {
+        if (btn.dataset.theme === themeName) btn.classList.add("active");
+        else btn.classList.remove("active");
+      });
     }
 
     themeButtons.forEach(btn => {
-      if (btn.dataset.theme === themeName) btn.classList.add("active");
-      else btn.classList.remove("active");
+      btn.addEventListener("click", () => {
+        const themeName = btn.dataset.theme;
+        const newSettings = { ...appSettings, theme: themeName };
+        saveSettingsLocal(newSettings);
+        applyTheme(themeName);
+      });
     });
-  }
 
-  themeButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const themeName = btn.dataset.theme;
-      const newSettings = { ...appSettings, theme: themeName };
-      saveSettingsLocal(newSettings);
-      applyTheme(themeName);
+    if (saveJourneyBtn) {
+      saveJourneyBtn.addEventListener("click", () => {
+        const surgeryDate = surgeryDateInput.value || "";
+        const goalWeightVal = goalWeightInput.value ? Number(goalWeightInput.value) : null;
+
+        if (!surgeryDate || !goalWeightVal) {
+          alert("Please enter both a surgery date and a goal weight.");
+          return;
+        }
+
+        const newSettings = { ...appSettings, surgeryDate, goalWeight: goalWeightVal };
+        saveSettingsLocal(newSettings);
+
+        updateJourneySummary(newSettings, getSortedDataArray());
+        showToast("Journey info saved.");
+      });
+    }
+
+    // Donation prompt behavior
+    function openDonationPrompt() {
+      if (!donationPrompt) return;
+      donationPrompt.classList.add("open");
+    }
+
+    function closeDonationPrompt() {
+      if (!donationPrompt) return;
+      donationPrompt.classList.remove("open");
+    }
+
+    function maybeShowDonationPrompt() {
+      const hide = localStorage.getItem(DONATE_HIDE_KEY);
+      if (hide === "true") return;
+      setTimeout(() => {
+        openDonationPrompt();
+      }, 7000);
+    }
+
+    if (donationCloseBtn) {
+      donationCloseBtn.addEventListener("click", () => {
+        closeDonationPrompt();
+      });
+    }
+
+    if (donationLaterBtn) {
+      donationLaterBtn.addEventListener("click", () => {
+        closeDonationPrompt();
+      });
+    }
+
+    if (donationNeverBtn) {
+      donationNeverBtn.addEventListener("click", () => {
+        localStorage.setItem(DONATE_HIDE_KEY, "true");
+        closeDonationPrompt();
+      });
+    }
+
+    if (donationSupportBtn) {
+      donationSupportBtn.addEventListener("click", () => {
+        window.open("https://buymeacoffee.com/vsg.buddy", "_blank");
+        closeDonationPrompt();
+      });
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user || null;
+
+      if (currentUser) {
+        if (topAuthStatus) topAuthStatus.textContent = currentUser.email || "Signed in";
+        if (sideAuthStatus) sideAuthStatus.textContent = "Signed in as " + (currentUser.email || "");
+        if (loginPage) loginPage.style.display = "none";
+        if (appMain) appMain.style.display = "block";
+
+        const cloudData = await loadAllDataCloud();
+        const localData = loadAllDataLocal();
+        const merged = { ...localData, ...cloudData };
+        saveAllDataLocal(merged);
+
+        const current = dateInput.value || getTodayString();
+        await loadDataForDate(current);
+        buildCharts();
+        buildWeeklySummary();
+        buildStreaksUI();
+        updateJourneySummary(appSettings, getSortedDataArray());
+
+        maybeShowDonationPrompt();
+      } else {
+        if (topAuthStatus) topAuthStatus.textContent = "Guest mode";
+        if (sideAuthStatus) sideAuthStatus.textContent = "Not signed in";
+        if (loginPage) loginPage.style.display = "flex";
+        if (appMain) appMain.style.display = "none";
+      }
     });
-  });
 
-  if (saveJourneyBtn) {
-    saveJourneyBtn.addEventListener("click", () => {
-      const surgeryDate = surgeryDateInput.value || "";
-      const goalWeightVal = goalWeightInput.value ? Number(goalWeightInput.value) : null;
+    (async function init() {
+      const todayStr = getTodayString();
+      if (dateInput) dateInput.value = todayStr;
 
-      if (!surgeryDate || !goalWeightVal) {
-        alert("Please enter both a surgery date and a goal weight.");
-        return;
+      appSettings = loadSettingsLocal();
+      applyTheme(appSettings.theme || "calm");
+
+      if (appSettings.surgeryDate) {
+        surgeryDateInput.value = appSettings.surgeryDate;
+      }
+      if (appSettings.goalWeight) {
+        goalWeightInput.value = appSettings.goalWeight;
       }
 
-      const newSettings = { ...appSettings, surgeryDate, goalWeight: goalWeightVal };
-      saveSettingsLocal(newSettings);
-
-      updateJourneySummary(newSettings, getSortedDataArray());
-      showToast("Journey info saved.");
-    });
-  }
-
-  // Donation prompt behavior
-  function openDonationPrompt() {
-    if (!donationPrompt) return;
-    donationPrompt.classList.add("open");
-  }
-
-  function closeDonationPrompt() {
-    if (!donationPrompt) return;
-    donationPrompt.classList.remove("open");
-  }
-
-  function maybeShowDonationPrompt() {
-    const hide = localStorage.getItem(DONATE_HIDE_KEY);
-    if (hide === "true") return;
-    setTimeout(() => {
-      openDonationPrompt();
-    }, 7000);
-  }
-
-  if (donationCloseBtn) {
-    donationCloseBtn.addEventListener("click", () => {
-      closeDonationPrompt();
-    });
-  }
-
-  if (donationLaterBtn) {
-    donationLaterBtn.addEventListener("click", () => {
-      closeDonationPrompt();
-    });
-  }
-
-  if (donationNeverBtn) {
-    donationNeverBtn.addEventListener("click", () => {
-      localStorage.setItem(DONATE_HIDE_KEY, "true");
-      closeDonationPrompt();
-    });
-  }
-
-  if (donationSupportBtn) {
-    donationSupportBtn.addEventListener("click", () => {
-      window.open("https://buymeacoffee.com/vsg.buddy", "_blank");
-      closeDonationPrompt();
-    });
-  }
-
-  onAuthStateChanged(auth, async (user) => {
-    currentUser = user || null;
-
-    if (currentUser) {
-      if (topAuthStatus) topAuthStatus.textContent = currentUser.email || "Signed in";
-      if (sideAuthStatus) sideAuthStatus.textContent = "Signed in as " + (currentUser.email || "");
-      if (loginPage) loginPage.style.display = "none";
-      if (appMain) appMain.style.display = "block";
-
-      const cloudData = await loadAllDataCloud();
-      const localData = loadAllDataLocal();
-      const merged = { ...localData, ...cloudData };
-      saveAllDataLocal(merged);
-
-      const current = dateInput.value || getTodayString();
-      await loadDataForDate(current);
+      await loadDataForDate(todayStr);
+      showPageById("homePage");
+      updateQuote();
       buildCharts();
       buildWeeklySummary();
       buildStreaksUI();
       updateJourneySummary(appSettings, getSortedDataArray());
-
-      maybeShowDonationPrompt();
-    } else {
-      if (topAuthStatus) topAuthStatus.textContent = "Guest mode";
-      if (sideAuthStatus) sideAuthStatus.textContent = "Not signed in";
-      if (loginPage) loginPage.style.display = "flex";
-      if (appMain) appMain.style.display = "none";
-    }
-  });
-
-  (async function init() {
-    const todayStr = getTodayString();
-    if (dateInput) dateInput.value = todayStr;
-
-    appSettings = loadSettingsLocal();
-    applyTheme(appSettings.theme || "calm");
-
-    if (appSettings.surgeryDate) {
-      surgeryDateInput.value = appSettings.surgeryDate;
-    }
-    if (appSettings.goalWeight) {
-      goalWeightInput.value = appSettings.goalWeight;
-    }
-
-    await loadDataForDate(todayStr);
-    showPageById("homePage");
-    updateQuote();
-    buildCharts();
-    buildWeeklySummary();
-    buildStreaksUI();
-    updateJourneySummary(appSettings, getSortedDataArray());
-  })();
-
-  // (Optional) PWA service worker registration, if you add sw.js later
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .catch((err) => console.error("SW registration failed", err));
-    });
-  }
-</script>
+    })();
+  </script>
+</body>
+</html>  this is my code please analyze and remember this
