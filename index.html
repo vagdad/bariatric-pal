@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Bariatric Pal</title>
+  <title>VSG Buddy</title>
 
   <!-- Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -136,9 +136,7 @@
       display: none;
     }
 
-    .side-menu.open {
-      display: block;
-    }
+    .side-menu.open { display: block; }
 
     .side-menu-header {
       display: flex;
@@ -156,9 +154,7 @@
       font-size: 0.85rem;
     }
 
-    .side-menu-item + .side-menu-item {
-      margin-top: 10px;
-    }
+    .side-menu-item + .side-menu-item { margin-top: 10px; }
 
     .side-menu-label {
       font-weight: 600;
@@ -175,9 +171,7 @@
       text-decoration: none;
     }
 
-    .side-menu-links a:hover {
-      text-decoration: underline;
-    }
+    .side-menu-links a:hover { text-decoration: underline; }
 
     .side-auth-status {
       font-size: 0.8rem;
@@ -362,7 +356,10 @@
       accent-color: var(--accent);
     }
 
-    .checkbox-row label { margin: 0; font-weight: 500; }
+    .checkbox-row label {
+      margin: 0;
+      font-weight: 500;
+    }
 
     .button-row {
       margin-top: 16px;
@@ -486,6 +483,7 @@
     }
 
     /* Recommended products grid */
+
     .product-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -511,6 +509,7 @@
     .product-link:hover { text-decoration: underline; }
 
     /* Backup / restore styling */
+
     .backup-label {
       display: inline-flex;
       align-items: center;
@@ -572,11 +571,7 @@
       padding: 2px;
     }
 
-    .ring-main {
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
+    .ring-main { font-weight: 600; font-size: 0.9rem; }
     .ring-caption {
       margin-top: 2px;
       color: var(--text-muted);
@@ -626,13 +621,8 @@
       font-size: 0.8rem;
     }
 
-    .journey-settings {
-      margin-bottom: 8px;
-    }
-
-    .journey-summary p {
-      margin: 4px 0;
-    }
+    .journey-settings { margin-bottom: 8px; }
+    .journey-summary p { margin: 4px 0; }
 
     /* Appearance / themes */
 
@@ -657,11 +647,9 @@
       border-color: var(--accent);
     }
 
-    /* DARK MODE FIXES FOR MIDNIGHT THEME */
+    /* DARK MODE FIXES */
 
-    body.dark-mode {
-      color: var(--text-main);
-    }
+    body.dark-mode { color: var(--text-main); }
 
     body.dark-mode .card {
       background: rgba(15, 23, 42, 0.96);
@@ -727,9 +715,7 @@
       z-index: 1200;
     }
 
-    .donation-overlay.open {
-      display: flex;
-    }
+    .donation-overlay.open { display: flex; }
 
     .donation-card {
       max-width: 420px;
@@ -771,10 +757,7 @@
       box-shadow: 0 8px 18px rgba(79, 140, 255, 0.35);
     }
 
-    .donate-secondary {
-      background: #ffffff;
-    }
-
+    .donate-secondary { background: #ffffff; }
     .donate-muted {
       background: transparent;
       border: 1px dashed #d2dde8;
@@ -797,7 +780,7 @@
     <!-- LOGIN PAGE -->
     <div id="loginPage" class="login-page">
       <div class="login-card">
-        <h1 class="login-title">BARIATRIC PAL</h1>
+        <h1 class="login-title">VSG BUDDY</h1>
         <p class="login-subtitle">YOUR NEW FRIEND, FOR THE NEW YOU!</p>
 
         <label for="authEmail">Email</label>
@@ -812,7 +795,7 @@
         </div>
 
         <p class="login-hint">
-          Your logs (water, protein, weight, walking) are safely stored in your Bariatric Pal account.
+          Your logs (water, protein, weight, walking) are safely stored in your VSG Buddy account.
         </p>
       </div>
     </div>
@@ -831,7 +814,7 @@
               </div>
             </div>
             <div class="brand-text-block">
-              <span class="brand-name">Bariatric Pal</span>
+              <span class="brand-name">VSG Buddy</span>
               <span class="brand-tagline">Your new friend, for the new you</span>
             </div>
           </div>
@@ -844,7 +827,7 @@
 
       <nav id="sideMenu" class="side-menu">
         <div class="side-menu-header">
-          <span>Bariatric Pal Menu</span>
+          <span>VSG Buddy Menu</span>
           <button id="closeMenuBtn" class="close-menu-btn" type="button">✕</button>
         </div>
         <ul class="side-menu-list">
@@ -866,7 +849,7 @@
           <li class="side-menu-item">
             <span class="side-menu-label">Donate</span>
             <div class="side-menu-links">
-              <a href="https://buymeacoffee.com/bariatric.pal" target="_blank">Support Bariatric Pal</a>
+              <a href="https://buymeacoffee.com/bariatric.pal" target="_blank">Support VSG Buddy</a>
             </div>
           </li>
           <li class="side-menu-item">
@@ -880,7 +863,7 @@
       </nav>
 
       <header class="app-header">
-        <h1>Bariatric Pal</h1>
+        <h1>VSG Buddy</h1>
         <p class="tagline">Gentle reminders to fuel, move, and heal after VSG.</p>
         <div class="chip-row">
           <span class="chip">💧 Hydration</span>
@@ -977,7 +960,7 @@
           </div>
 
           <p class="hint">
-            You’re signed in, so your progress is saved to your Bariatric Pal account.
+            You’re signed in, so your progress is saved to your VSG Buddy account.
           </p>
         </section>
 
@@ -1192,11 +1175,11 @@
   <div id="donationPrompt" class="donation-overlay">
     <div class="donation-card">
       <div class="donation-header">
-        <div class="donation-title">Support Bariatric Pal 💙</div>
+        <div class="donation-title">Support VSG Buddy 💙</div>
         <button id="donationCloseBtn" class="close-menu-btn" type="button" style="padding:4px 8px;font-size:0.8rem;">✕</button>
       </div>
       <div class="donation-body">
-        Bariatric Pal is built to stay simple, helpful, and free for VSG patients.
+        VSG Buddy is built to stay simple, helpful, and free for VSG patients.
         Small donations help us upgrade the site, move closer to the app stores,
         and keep this tool free for everyone.
       </div>
@@ -1929,10 +1912,10 @@
       `;
     }
 
-    // Save / clear handlers (clear inputs after save)
+    // Save / clear handlers
     saveBtn.addEventListener("click", async () => {
       if (!currentUser) {
-        alert("Please log in again to save your Bariatric Pal data.");
+        alert("Please log in again to save your VSG Buddy data.");
         return;
       }
 
@@ -1972,7 +1955,7 @@
       medsInput.checked = false;
       notesInput.value = "";
 
-      alert("Saved your Bariatric Pal log for " + dateStr);
+      alert("Saved your VSG Buddy log for " + dateStr);
     });
 
     clearBtn.addEventListener("click", async () => {
@@ -2024,7 +2007,7 @@
         const doc = new jsPDF();
 
         doc.setFontSize(16);
-        doc.text("Bariatric Pal Progress Report", 105, 12, { align: "center" });
+        doc.text("VSG Buddy Progress Report", 105, 12, { align: "center" });
 
         doc.setFontSize(10);
         let y = 22;
@@ -2048,7 +2031,7 @@
           y += 7;
         });
 
-        doc.save("bariatric-pal-report.pdf");
+        doc.save("vsg-buddy-report.pdf");
       });
     }
 
@@ -2067,7 +2050,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "bariatric-pal-backup.json";
+        a.download = "vsg-buddy-backup.json";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -2109,7 +2092,7 @@
             updateJourneySummary(appSettings, getSortedDataArray());
           } catch (err) {
             console.error(err);
-            alert("That file doesn't look like a valid Bariatric Pal backup.");
+            alert("That file doesn't look like a valid VSG Buddy backup.");
           } finally {
             restoreJsonInput.value = "";
           }
@@ -2221,7 +2204,6 @@
     function maybeShowDonationPrompt() {
       const hide = localStorage.getItem(DONATE_HIDE_KEY);
       if (hide === "true") return;
-      // gentle delay so it doesn't smack people immediately
       setTimeout(() => {
         openDonationPrompt();
       }, 7000);
@@ -2274,7 +2256,6 @@
         buildStreaksUI();
         updateJourneySummary(appSettings, getSortedDataArray());
 
-        // Show donation prompt (if not disabled)
         maybeShowDonationPrompt();
       } else {
         if (topAuthStatus) topAuthStatus.textContent = "Guest mode";
