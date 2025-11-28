@@ -2,7 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>VSG Buddy</title>
+  <title>VSG Buddy – Gastric Sleeve (VSG) Recovery Tracker</title>
+
+  <!-- Mobile friendly -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Google AdSense -->
+  <meta name="google-adsense-account" content="ca-pub-9357572315009133">
+
+  <!-- Basic SEO -->
+  <meta name="description" content="VSG Buddy is a simple, free tracker for gastric sleeve (VSG) patients. Log your water, protein, weight, walking, medication and notes to build strong habits after bariatric surgery.">
+  <meta name="keywords" content="VSG app, gastric sleeve tracker, bariatric surgery tracker, VSG Buddy, water tracker after VSG, protein goals after gastric sleeve, bariatric journal">
+
+  <!-- Open Graph (Facebook, etc.) -->
+  <meta property="og:title" content="VSG Buddy – VSG Recovery Tracker">
+  <meta property="og:description" content="Track water, protein, weight, walking and meds after gastric sleeve surgery with a simple, free tool made by a fellow VSG patient.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://YOUR-SITE-URL-HERE">
+  <meta property="og:image" content="https://YOUR-SITE-URL-HERE/icons/vsg-buddy-512.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="VSG Buddy – VSG Recovery Tracker">
+  <meta name="twitter:description" content="Your new friend for building habits after gastric sleeve surgery.">
+  <meta name="twitter:image" content="https://YOUR-SITE-URL-HERE/icons/vsg-buddy-512.png">
 
   <!-- Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,9 +73,11 @@
     .login-page {
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 40px 12px;
+      gap: 14px;
     }
 
     .login-card {
@@ -821,6 +846,66 @@
           Your logs (water, protein, weight, walking) are safely stored in your VSG Buddy account.
         </p>
       </div>
+
+      <!-- About + FAQ for SEO & trust -->
+      <section class="card" style="margin-top: 18px; max-width: 650px; width: 100%;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">About VSG Buddy</div>
+            <div class="card-subtitle">Built by someone who’s walked the VSG road.</div>
+          </div>
+        </div>
+        <p style="font-size:0.9rem; line-height:1.6; text-align:left;">
+          VSG Buddy was born out of real life, not a tech company boardroom. I’m a husband, father, and
+          VSG patient who got tired of trying to remember water, protein, meds, steps, and weight in a
+          fog of recovery. I didn’t want another complicated app – I wanted a <strong>simple friend on my phone</strong>
+          that quietly reminded me to show up for myself every day.
+        </p>
+        <p style="font-size:0.9rem; line-height:1.6; text-align:left;">
+          This tracker is for people who have been through a lot and still chose to fight for a new life.
+          Every ounce of water you log, every gram of protein, every short walk – it all counts. VSG Buddy
+          exists to whisper, “You’re doing better than you think. Keep going.”
+        </p>
+        <p style="font-size:0.9rem; line-height:1.6; text-align:left;">
+          If you’ve ever felt overwhelmed, ashamed, or scared that you might “mess this up,” you’re not
+          alone. This tool is my way of saying: <strong>you deserve to heal, you deserve to feel good in your body,
+          and you are absolutely capable of finishing what you started.</strong>
+        </p>
+      </section>
+
+      <section class="card" style="margin-top: 14px; max-width: 650px; width: 100%;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">VSG Buddy FAQ</div>
+            <div class="card-subtitle">Quick answers for your recovery journey.</div>
+          </div>
+        </div>
+        <h3 style="font-size:0.95rem; margin:6px 0;">What is VSG Buddy?</h3>
+        <p style="font-size:0.9rem; line-height:1.5;">
+          VSG Buddy is a free web app for gastric sleeve (VSG) patients. It helps you track your daily
+          water, protein, weight, walking and medication in one simple checklist, with charts and summaries
+          so you can see your progress over time.
+        </p>
+
+        <h3 style="font-size:0.95rem; margin:10px 0 4px;">Do I have to pay for it?</h3>
+        <p style="font-size:0.9rem; line-height:1.5;">
+          No. VSG Buddy is free to use. You can create an account, log your journey, and export your
+          progress report as a PDF at any time.
+        </p>
+
+        <h3 style="font-size:0.95rem; margin:10px 0 4px;">What should I track after VSG?</h3>
+        <p style="font-size:0.9rem; line-height:1.5;">
+          Most bariatric teams emphasize consistent <strong>water, protein, movement, medication, and weight</strong>.
+          VSG Buddy focuses on those exact habits so you can build a simple daily routine instead of
+          feeling overwhelmed.
+        </p>
+
+        <h3 style="font-size:0.95rem; margin:10px 0 4px;">Is my data private?</h3>
+        <p style="font-size:0.9rem; line-height:1.5;">
+          Your logs are tied to your email account and stored securely in the cloud using Firebase.
+          Only you can see your data when you sign in.
+        </p>
+      </section>
     </div>
 
     <!-- MAIN APP -->
@@ -886,8 +971,8 @@
       </nav>
 
       <header class="app-header">
-        <h1>VSG Buddy</h1>
-        <p class="tagline">Gentle reminders to fuel, move, and heal after VSG.</p>
+        <h1>VSG Buddy – Your Gastric Sleeve Recovery Tracker</h1>
+        <p class="tagline">Log water, protein, weight, walking, and meds to build habits after bariatric surgery.</p>
         <div class="chip-row">
           <span class="chip">💧 Hydration</span>
           <span class="chip">🍗 Protein</span>
@@ -1189,6 +1274,40 @@
               </p>
             </div>
           </div>
+
+          <!-- Email reports & reminders UI -->
+          <div class="journey-card" style="margin-top:16px;">
+            <div class="card-header" style="padding:0; margin-bottom:6px;">
+              <div>
+                <div class="card-title" style="font-size:0.98rem;">Email Reports & Reminders</div>
+                <div class="card-subtitle">Let VSG Buddy tap you on the shoulder.</div>
+              </div>
+            </div>
+
+            <p class="hint" style="margin-top:4px;">
+              Turn these on if you’d like VSG Buddy to send you a weekly progress report and gentle
+              reminders if you haven’t logged in for a few days.
+            </p>
+
+            <div class="checkbox-row">
+              <input type="checkbox" id="weeklyEmailCheckbox">
+              <label for="weeklyEmailCheckbox">Email me a weekly progress summary</label>
+            </div>
+
+            <div class="checkbox-row">
+              <input type="checkbox" id="inactivityEmailCheckbox">
+              <label for="inactivityEmailCheckbox">Email me if I haven’t logged in for 3 days</label>
+            </div>
+
+            <div class="button-row">
+              <button id="saveEmailPrefsBtn" type="button">📧 Save Email Preferences</button>
+            </div>
+
+            <p class="hint" style="margin-top:6px;">
+              Note: These preferences are saved to your account. Actual emails are sent by our secure
+              server and you can turn them off any time.
+            </p>
+          </div>
         </section>
       </div>
     </div><!-- end #appMain -->
@@ -1245,23 +1364,24 @@
       getDoc
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+    // Your VSG Buddy Firebase project
     const firebaseConfig = {
-      apiKey: "AIzaSyDbmNydi-7z6ev2BxQfzVworASALmZegzU",
-      authDomain: "bariatric-pal.firebaseapp.com",
-      projectId: "bariatric-pal",
-      storageBucket: "bariatric-pal.firebasestorage.app",
-      messagingSenderId: "191371818386",
-      appId: "1:191371818386:web:1f3e1156cd4c4710153d4b",
-      measurementId: "G-1L2RTFDQRN"
+      apiKey: "AIzaSyB0Grf96gKPyhs3AGnE5tnu1oxPi4mn9nw",
+      authDomain: "vsg-buddy.firebaseapp.com",
+      projectId: "vsg-buddy",
+      storageBucket: "vsg-buddy.firebasestorage.app",
+      messagingSenderId: "835934469982",
+      appId: "1:835934469982:web:ca9abc795a8c600256d9cf",
+      measurementId: "G-NJEDXSX3KQ"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const STORAGE_KEY = "bariatricPalData";
-    const SETTINGS_KEY = "bariatricPalSettings";
-    // New key so the donation prompt can show again even if the old one was hidden
+    const STORAGE_KEY = "vsgBuddyData";
+    const SETTINGS_KEY = "vsgBuddySettings";
+    // Donation hide key
     const DONATE_HIDE_KEY = "vsgBuddyHideDonatePrompt_v2";
 
     const GOALS = { water: 64, protein: 60, walk: 20 };
@@ -1325,6 +1445,10 @@
     const donationSupportBtn = document.getElementById("donationSupportBtn");
     const donationLaterBtn = document.getElementById("donationLaterBtn");
     const donationNeverBtn = document.getElementById("donationNeverBtn");
+
+    const weeklyEmailCheckbox = document.getElementById("weeklyEmailCheckbox");
+    const inactivityEmailCheckbox = document.getElementById("inactivityEmailCheckbox");
+    const saveEmailPrefsBtn = document.getElementById("saveEmailPrefsBtn");
 
     const toastEl = document.getElementById("toast");
 
@@ -2230,6 +2354,33 @@
       });
     }
 
+    // Save email preferences
+    if (saveEmailPrefsBtn) {
+      saveEmailPrefsBtn.addEventListener("click", async () => {
+        const prefs = {
+          weeklyReport: !!(weeklyEmailCheckbox && weeklyEmailCheckbox.checked),
+          inactivityReminder: !!(inactivityEmailCheckbox && inactivityEmailCheckbox.checked)
+        };
+
+        const newSettings = { ...appSettings, emailPrefs: prefs };
+        saveSettingsLocal(newSettings);
+
+        if (currentUser) {
+          try {
+            await setDoc(
+              doc(db, "users", currentUser.uid),
+              { emailPrefs: prefs },
+              { merge: true }
+            );
+          } catch (e) {
+            console.error("Failed to save email prefs to cloud:", e);
+          }
+        }
+
+        showToast("Email preferences saved.");
+      });
+    }
+
     // Donation prompt behavior
     function openDonationPrompt() {
       if (!donationPrompt) return;
@@ -2318,6 +2469,14 @@
       if (appSettings.goalWeight) {
         goalWeightInput.value = appSettings.goalWeight;
       }
+      if (appSettings.emailPrefs) {
+        if (weeklyEmailCheckbox) {
+          weeklyEmailCheckbox.checked = !!appSettings.emailPrefs.weeklyReport;
+        }
+        if (inactivityEmailCheckbox) {
+          inactivityEmailCheckbox.checked = !!appSettings.emailPrefs.inactivityReminder;
+        }
+      }
 
       await loadDataForDate(todayStr);
       showPageById("homePage");
@@ -2327,6 +2486,15 @@
       buildStreaksUI();
       updateJourneySummary(appSettings, getSortedDataArray());
     })();
+
+    // Optional PWA service worker if you add sw.js later
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .catch((err) => console.error("SW registration failed", err));
+      });
+    }
   </script>
 </body>
-</html>  
+</html>
