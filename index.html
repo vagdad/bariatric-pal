@@ -319,6 +319,44 @@
       color: var(--text-muted);
     }
 
+    /* Recommended products grid */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .product-card {
+      background-color: #f6f8ff;
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .product-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .product-tagline {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .product-link {
+      font-size: 0.85rem;
+      color: var(--accent-strong);
+      text-decoration: none;
+      margin-top: 4px;
+    }
+
+    .product-link:hover {
+      text-decoration: underline;
+    }
+
     @media (max-width: 480px) {
       body {
         padding: 16px 10px;
@@ -352,6 +390,7 @@
       <button class="nav-tab active" data-target="homePage">Home</button>
       <button class="nav-tab" data-target="quotePage">Quote of the Day</button>
       <button class="nav-tab" data-target="affirmationsPage">Affirmations</button>
+      <button class="nav-tab" data-target="productsPage">Recommended Products</button>
       <button class="nav-tab" data-target="progressPage">Progress Report</button>
     </nav>
 
@@ -455,6 +494,94 @@
           <li>Small choices are creating a big change.</li>
           <li>I am proud of myself for choosing this path.</li>
         </ul>
+      </section>
+    </div>
+
+    <!-- RECOMMENDED PRODUCTS PAGE -->
+    <div id="productsPage" class="page hidden">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Recommended Products</div>
+            <div class="card-subtitle">Tools and treats that support your journey.</div>
+          </div>
+        </div>
+
+        <div class="product-grid" id="productGrid">
+          <!-- 1 -->
+          <div class="product-card">
+            <div class="product-name">Favorite Protein #1</div>
+            <div class="product-tagline">
+              One of your go-to products — tap to view it on Amazon.
+            </div>
+            <a href="https://amzn.to/4iqLU7M"
+               class="product-link"
+               target="_blank"
+               rel="noopener noreferrer">
+              View product
+            </a>
+          </div>
+
+          <!-- 2 -->
+          <div class="product-card">
+            <div class="product-name">SEEQ Clear Whey – Strawberry Lemonade</div>
+            <div class="product-tagline">
+              Light, juice-style protein with a bright strawberry lemonade flavor.
+            </div>
+            <a href="https://amzn.to/4ajrIm7"
+               class="product-link"
+               target="_blank"
+               rel="noopener noreferrer">
+              View on Amazon
+            </a>
+          </div>
+
+          <!-- 3 -->
+          <div class="product-card">
+            <div class="product-name">Favorite Protein #2</div>
+            <div class="product-tagline">
+              Another product from your stack — click to check details and flavor.
+            </div>
+            <a href="https://amzn.to/48bQfGY"
+               class="product-link"
+               target="_blank"
+               rel="noopener noreferrer">
+              View product
+            </a>
+          </div>
+
+          <!-- 4 -->
+          <div class="product-card">
+            <div class="product-name">Javvy Caramel Protein Iced Coffee</div>
+            <div class="product-tagline">
+              Coffee + protein in one — caramel flavor with no added sugar.
+            </div>
+            <a href="https://amzn.to/4im1wcw"
+               class="product-link"
+               target="_blank"
+               rel="noopener noreferrer">
+              View on Amazon
+            </a>
+          </div>
+
+          <!-- 5 -->
+          <div class="product-card">
+            <div class="product-name">Jordan’s Skinny Mixes Sugar Free Vanilla Syrup</div>
+            <div class="product-tagline">
+              Zero-calorie vanilla syrup — perfect to sweeten coffee or protein shakes.
+            </div>
+            <a href="https://amzn.to/4opdXWq"
+               class="product-link"
+               target="_blank"
+               rel="noopener noreferrer">
+              View on Amazon
+            </a>
+          </div>
+        </div>
+
+        <p class="hint">
+          You can change the product names or descriptions anytime by editing this page’s HTML.
+        </p>
       </section>
     </div>
 
