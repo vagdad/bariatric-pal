@@ -849,7 +849,7 @@
           <li class="side-menu-item">
             <span class="side-menu-label">Donate</span>
             <div class="side-menu-links">
-              <a href="https://buymeacoffee.com/bariatric.pal" target="_blank">Support VSG Buddy</a>
+              <a href="https://buymeacoffee.com/vsg.buddy" target="_blank">Support VSG Buddy</a>
             </div>
           </li>
           <li class="side-menu-item">
@@ -1580,7 +1580,7 @@
       const ctxWalk = document.getElementById("walkChart").getContext("2d");
 
       if (weightChart) weightChart.destroy();
-      if (waterChart) waterChart.destroy();
+      if (waterChart) weightChart.destroy();
       if (proteinChart) proteinChart.destroy();
       if (walkChart) walkChart.destroy();
 
@@ -2230,7 +2230,7 @@
 
     if (donationSupportBtn) {
       donationSupportBtn.addEventListener("click", () => {
-        window.open("https://buymeacoffee.com/bariatric.pal", "_blank");
+        window.open("https://buymeacoffee.com/vsg.buddy", "_blank");
         closeDonationPrompt();
       });
     }
