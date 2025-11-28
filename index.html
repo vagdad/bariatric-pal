@@ -394,6 +394,7 @@
         <div class="button-row">
           <button id="saveBtn">💾 Save Day</button>
           <button id="clearBtn">🗑 Clear This Day</button>
+          <button id="goToProgressBtn" type="button">📈 View Progress Report</button>
         </div>
 
         <p class="hint">
@@ -470,7 +471,7 @@
     </div>
   </div>
 
-  <!-- Chart.js for the line graph -->
+  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
@@ -485,6 +486,7 @@
     const notesInput = document.getElementById("notes");
     const saveBtn = document.getElementById("saveBtn");
     const clearBtn = document.getElementById("clearBtn");
+    const goToProgressBtn = document.getElementById("goToProgressBtn");
     const summaryDiv = document.getElementById("summary");
 
     const navTabs = document.querySelectorAll(".nav-tab");
@@ -493,7 +495,7 @@
     const quoteDate = document.getElementById("quoteDate");
 
     const noWeightData = document.getElementById("noWeightData");
-    let weightChart; // chart instance
+    let weightChart;
 
     function getTodayString() {
       const today = new Date();
@@ -575,7 +577,6 @@
       `;
     }
 
-    // ---- Tabs / Pages ----
     function showPageById(id) {
       pages.forEach(page => page.classList.add("hidden"));
       navTabs.forEach(tab => tab.classList.remove("active"));
@@ -591,7 +592,6 @@
         }
       });
 
-      // If we just opened Progress Report, (re)build the chart
       if (id === "progressPage") {
         buildWeightChart();
       }
@@ -604,7 +604,12 @@
       });
     });
 
-    // ---- Quote of the Day ----
+    if (goToProgressBtn) {
+      goToProgressBtn.addEventListener("click", () => {
+        showPageById("progressPage");
+      });
+    }
+
     const quotes = [
       "You are healing, even on the days it doesn’t feel like it.",
       "Small steps every day add up to a big transformation.",
@@ -631,7 +636,6 @@
       quoteDate.textContent = new Date().toLocaleDateString();
     }
 
-    // ---- Progress Report helpers ----
     function getSortedDataArray() {
       const allData = loadAllData();
       const dates = Object.keys(allData).sort();
@@ -643,7 +647,6 @@
 
     function buildWeightChart() {
       const dataArr = getSortedDataArray();
-      // Filter to only days that have a numeric weight
       const points = dataArr.filter(d => d.weight != null && !isNaN(Number(d.weight)));
 
       if (!points.length) {
@@ -693,7 +696,6 @@
       });
     }
 
-    // ---- Save / Clear day ----
     saveBtn.addEventListener("click", () => {
       const dateStr = dateInput.value || getTodayString();
 
@@ -710,7 +712,6 @@
       allData[dateStr] = dayData;
       saveAllData(allData);
       updateSummary(dayData);
-      // keep chart in sync if user goes to Progress Report
       buildWeightChart();
       alert("Saved your Bariatric Pal log for " + dateStr);
     });
@@ -739,16 +740,14 @@
       }
     });
 
-    // ---- Initial load ----
     (function init() {
       const todayStr = getTodayString();
       dateInput.value = todayStr;
       loadDataForDate(todayStr);
       showPageById("homePage");
       updateQuote();
-      buildWeightChart(); // in case you already have data saved
+      buildWeightChart();
     })();
   </script>
 </body>
 </html>
-
