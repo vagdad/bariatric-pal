@@ -764,6 +764,29 @@
       font-size: 0.8rem;
     }
 
+    /* Toast notification */
+
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--card-bg);
+      padding: 8px 14px;
+      border-radius: 999px;
+      box-shadow: var(--shadow-soft);
+      font-size: 0.85rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      z-index: 2000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+
     @media (max-width: 480px) {
       body { padding: 16px 10px; }
       h1 { font-size: 1.45rem; }
@@ -1171,6 +1194,9 @@
     </div><!-- end #appMain -->
   </div><!-- end .app-container -->
 
+  <!-- Toast notification -->
+  <div id="toast" class="toast"></div>
+
   <!-- Donation prompt overlay -->
   <div id="donationPrompt" class="donation-overlay">
     <div class="donation-card">
@@ -1179,9 +1205,10 @@
         <button id="donationCloseBtn" class="close-menu-btn" type="button" style="padding:4px 8px;font-size:0.8rem;">✕</button>
       </div>
       <div class="donation-body">
-        VSG Buddy is built to stay simple, helpful, and free for VSG patients.
-        Small donations help us upgrade the site, move closer to the app stores,
-        and keep this tool free for everyone.
+        VSG Buddy is a free tool built for VSG patients. If you’d like to, you can chip in a small donation.
+        It helps keep the site online and free, improves the quality and performance of the tracker, moves us
+        closer to getting VSG Buddy on the app stores, and supports future projects we’re working on for this
+        community.
       </div>
       <div class="donation-buttons">
         <button id="donationSupportBtn" class="donate-primary" type="button">
@@ -1234,7 +1261,8 @@
 
     const STORAGE_KEY = "bariatricPalData";
     const SETTINGS_KEY = "bariatricPalSettings";
-    const DONATE_HIDE_KEY = "bariatricPalHideDonatePrompt";
+    // New key so the donation prompt can show again even if the old one was hidden
+    const DONATE_HIDE_KEY = "vsgBuddyHideDonatePrompt_v2";
 
     const GOALS = { water: 64, protein: 60, walk: 20 };
 
@@ -1297,6 +1325,8 @@
     const donationSupportBtn = document.getElementById("donationSupportBtn");
     const donationLaterBtn = document.getElementById("donationLaterBtn");
     const donationNeverBtn = document.getElementById("donationNeverBtn");
+
+    const toastEl = document.getElementById("toast");
 
     let currentUser = null;
     let weightChart, waterChart, proteinChart, walkChart;
@@ -1580,7 +1610,7 @@
       const ctxWalk = document.getElementById("walkChart").getContext("2d");
 
       if (weightChart) weightChart.destroy();
-      if (waterChart) weightChart.destroy();
+      if (waterChart) waterChart.destroy();
       if (proteinChart) proteinChart.destroy();
       if (walkChart) walkChart.destroy();
 
@@ -1912,6 +1942,16 @@
       `;
     }
 
+    // Toast helper
+    function showToast(message) {
+      if (!toastEl) return;
+      toastEl.textContent = message;
+      toastEl.classList.add("show");
+      setTimeout(() => {
+        toastEl.classList.remove("show");
+      }, 2200);
+    }
+
     // Save / clear handlers
     saveBtn.addEventListener("click", async () => {
       if (!currentUser) {
@@ -1947,7 +1987,7 @@
       buildStreaksUI();
       updateJourneySummary(appSettings, getSortedDataArray());
 
-      // Clear inputs
+      // Clear Today's Checklist fields (keep the date selected)
       waterInput.value = "";
       proteinInput.value = "";
       weightInput.value = "";
@@ -1955,7 +1995,7 @@
       medsInput.checked = false;
       notesInput.value = "";
 
-      alert("Saved your VSG Buddy log for " + dateStr);
+      showToast("Saved your VSG Buddy log for " + dateStr + "!");
     });
 
     clearBtn.addEventListener("click", async () => {
@@ -1980,10 +2020,10 @@
           buildWeeklySummary();
           buildStreaksUI();
           updateJourneySummary(appSettings, getSortedDataArray());
-          alert("Cleared data for " + dateStr);
+          showToast("Cleared data for " + dateStr);
         }
       } else {
-        alert("No data to clear for this date.");
+        showToast("No data to clear for this date.");
       }
     });
 
@@ -2186,7 +2226,7 @@
         saveSettingsLocal(newSettings);
 
         updateJourneySummary(newSettings, getSortedDataArray());
-        alert("Journey info saved.");
+        showToast("Journey info saved.");
       });
     }
 
