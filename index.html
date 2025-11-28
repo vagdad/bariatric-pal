@@ -87,7 +87,7 @@
       margin-top: 12px;
     }
 
-    /* Top bar + slide-out menu (inside appMain) */
+    /* Top bar + slide-out menu */
 
     .top-bar {
       display: flex;
@@ -98,11 +98,6 @@
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.9);
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
-    }
-
-    .top-logo {
-      font-weight: 600;
-      font-size: 0.95rem;
     }
 
     .top-bar-right {
@@ -199,6 +194,59 @@
       cursor: pointer;
       background: var(--accent);
       color: #fff;
+    }
+
+    /* Brand logo in top bar */
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.18);
+    }
+
+    .brand-icon-inner {
+      position: relative;
+      font-size: 18px;
+    }
+
+    .icon-heart {
+      position: absolute;
+      font-size: 11px;
+      right: -4px;
+      bottom: -4px;
+      color: #f97373;
+    }
+
+    .brand-text-block {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .brand-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-main);
+    }
+
+    .brand-tagline {
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
     }
 
     .app-header {
@@ -666,6 +714,73 @@
       color: var(--text-main);
     }
 
+    /* Donation prompt */
+
+    .donation-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 18px 12px;
+      z-index: 1200;
+    }
+
+    .donation-overlay.open {
+      display: flex;
+    }
+
+    .donation-card {
+      max-width: 420px;
+      width: 100%;
+      background: var(--card-bg);
+      border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.4);
+      padding: 14px 16px 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    .donation-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .donation-title {
+      font-size: 0.98rem;
+      font-weight: 600;
+    }
+
+    .donation-body {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .donation-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .donate-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(79, 140, 255, 0.35);
+    }
+
+    .donate-secondary {
+      background: #ffffff;
+    }
+
+    .donate-muted {
+      background: transparent;
+      border: 1px dashed #d2dde8;
+      font-size: 0.8rem;
+    }
+
     @media (max-width: 480px) {
       body { padding: 16px 10px; }
       h1 { font-size: 1.45rem; }
@@ -679,7 +794,7 @@
 <body>
   <div class="app-container">
 
-    <!-- LOGIN PAGE (shown until user logs in) -->
+    <!-- LOGIN PAGE -->
     <div id="loginPage" class="login-page">
       <div class="login-card">
         <h1 class="login-title">BARIATRIC PAL</h1>
@@ -702,13 +817,24 @@
       </div>
     </div>
 
-    <!-- MAIN APP (hidden until logged in) -->
+    <!-- MAIN APP -->
     <div id="appMain" style="display:none;">
 
       <!-- Top bar + slide-out menu -->
       <div class="top-bar">
         <div class="top-bar-left">
-          <span class="top-logo">🩺 Bariatric Pal</span>
+          <div class="brand-logo">
+            <div class="brand-icon">
+              <div class="brand-icon-inner">
+                💧
+                <span class="icon-heart">❤</span>
+              </div>
+            </div>
+            <div class="brand-text-block">
+              <span class="brand-name">Bariatric Pal</span>
+              <span class="brand-tagline">Your new friend, for the new you</span>
+            </div>
+          </div>
         </div>
         <div class="top-bar-right">
           <span id="topAuthStatus" class="top-auth-text">Guest mode</span>
@@ -740,7 +866,7 @@
           <li class="side-menu-item">
             <span class="side-menu-label">Donate</span>
             <div class="side-menu-links">
-              <a href="https://buymeacoffee.com" target="_blank">Buy me a coffee ☕</a>
+              <a href="https://buymeacoffee.com/bariatric.pal" target="_blank">Support Bariatric Pal</a>
             </div>
           </li>
           <li class="side-menu-item">
@@ -929,7 +1055,6 @@
           </div>
 
           <div class="product-grid" id="productGrid">
-            <!-- 1: Fruit Punch -->
             <div class="product-card">
               <div class="product-name">SEEQ Clear Whey – Fruit Punch</div>
               <div class="product-tagline">
@@ -943,7 +1068,6 @@
               </a>
             </div>
 
-            <!-- 2: Strawberry Lemonade -->
             <div class="product-card">
               <div class="product-name">SEEQ Clear Whey – Strawberry Lemonade</div>
               <div class="product-tagline">
@@ -957,7 +1081,6 @@
               </a>
             </div>
 
-            <!-- 3: Peach Tea -->
             <div class="product-card">
               <div class="product-name">SEEQ Clear Whey – Peach Tea</div>
               <div class="product-tagline">
@@ -971,7 +1094,6 @@
               </a>
             </div>
 
-            <!-- 4: Javvy Coffee -->
             <div class="product-card">
               <div class="product-name">Javvy Caramel Protein Iced Coffee</div>
               <div class="product-tagline">
@@ -985,7 +1107,6 @@
               </a>
             </div>
 
-            <!-- 5: Skinny Syrup -->
             <div class="product-card">
               <div class="product-name">Jordan’s Skinny Mixes – Sugar Free Vanilla Syrup</div>
               <div class="product-tagline">
@@ -1041,13 +1162,9 @@
             </label>
           </div>
 
-          <!-- Weekly coach summary -->
           <div id="weeklySummary" class="weekly-card"></div>
-
-          <!-- Streaks & badges -->
           <div id="streaksSummary" class="streaks-card"></div>
 
-          <!-- Surgery journey -->
           <div class="journey-card">
             <div class="journey-settings">
               <label for="surgeryDateInput">Surgery date</label>
@@ -1071,6 +1188,32 @@
     </div><!-- end #appMain -->
   </div><!-- end .app-container -->
 
+  <!-- Donation prompt overlay -->
+  <div id="donationPrompt" class="donation-overlay">
+    <div class="donation-card">
+      <div class="donation-header">
+        <div class="donation-title">Support Bariatric Pal 💙</div>
+        <button id="donationCloseBtn" class="close-menu-btn" type="button" style="padding:4px 8px;font-size:0.8rem;">✕</button>
+      </div>
+      <div class="donation-body">
+        Bariatric Pal is built to stay simple, helpful, and free for VSG patients.
+        Small donations help us upgrade the site, move closer to the app stores,
+        and keep this tool free for everyone.
+      </div>
+      <div class="donation-buttons">
+        <button id="donationSupportBtn" class="donate-primary" type="button">
+          ☕ Support the project
+        </button>
+        <button id="donationLaterBtn" class="donate-secondary" type="button">
+          Maybe later
+        </button>
+        <button id="donationNeverBtn" class="donate-muted" type="button">
+          Don’t show this again
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- jsPDF -->
@@ -1092,7 +1235,6 @@
       getDoc
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // ✅ Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDbmNydi-7z6ev2BxQfzVworASALmZegzU",
       authDomain: "bariatric-pal.firebaseapp.com",
@@ -1109,11 +1251,9 @@
 
     const STORAGE_KEY = "bariatricPalData";
     const SETTINGS_KEY = "bariatricPalSettings";
-    const GOALS = {
-      water: 64,
-      protein: 60,
-      walk: 20
-    };
+    const DONATE_HIDE_KEY = "bariatricPalHideDonatePrompt";
+
+    const GOALS = { water: 64, protein: 60, walk: 20 };
 
     // DOM refs
     const loginPage = document.getElementById("loginPage");
@@ -1169,6 +1309,12 @@
 
     const themeButtons = document.querySelectorAll(".theme-btn");
 
+    const donationPrompt = document.getElementById("donationPrompt");
+    const donationCloseBtn = document.getElementById("donationCloseBtn");
+    const donationSupportBtn = document.getElementById("donationSupportBtn");
+    const donationLaterBtn = document.getElementById("donationLaterBtn");
+    const donationNeverBtn = document.getElementById("donationNeverBtn");
+
     let currentUser = null;
     let weightChart, waterChart, proteinChart, walkChart;
     let appSettings = {};
@@ -1214,11 +1360,7 @@
     function loadAllDataLocal() {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) return {};
-      try {
-        return JSON.parse(stored);
-      } catch {
-        return {};
-      }
+      try { return JSON.parse(stored); } catch { return {}; }
     }
 
     function saveAllDataLocal(data) {
@@ -1228,11 +1370,7 @@
     function loadSettingsLocal() {
       const stored = localStorage.getItem(SETTINGS_KEY);
       if (!stored) return {};
-      try {
-        return JSON.parse(stored);
-      } catch {
-        return {};
-      }
+      try { return JSON.parse(stored); } catch { return {}; }
     }
 
     function saveSettingsLocal(settings) {
@@ -1265,7 +1403,8 @@
         if (!circleEl || !percentEl) return;
         const pct = goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : 0;
         const angle = pct * 3.6;
-        circleEl.style.background = `conic-gradient(var(--accent) ${angle}deg, #e5edf7 0deg)`;
+        circleEl.style.background =
+          `conic-gradient(var(--accent) ${angle}deg, #e5edf7 0deg)`;
         percentEl.textContent = pct + "%";
       }
 
@@ -1305,7 +1444,8 @@
         walkInput.value = "";
         medsInput.checked = false;
         notesInput.value = "";
-        summaryDiv.innerHTML = '<p class="notes-empty">No data saved for this date yet.</p>';
+        summaryDiv.innerHTML =
+          '<p class="notes-empty">No data saved for this date yet.</p>';
         updateProgressRings(null);
       }
     }
@@ -1325,7 +1465,9 @@
           </div>
           <div class="summary-item">
             <div class="summary-label">Weight</div>
-            <div class="summary-value">${dayData.weight != null ? dayData.weight + " lbs" : "Not logged"}</div>
+            <div class="summary-value">
+              ${dayData.weight != null ? dayData.weight + " lbs" : "Not logged"}
+            </div>
           </div>
           <div class="summary-item">
             <div class="summary-label">Walk</div>
@@ -1377,7 +1519,7 @@
       });
     }
 
-    // Slide menu handlers
+    // Slide menu
     if (menuToggle && sideMenu) {
       menuToggle.addEventListener("click", () => {
         sideMenu.classList.add("open");
@@ -1392,9 +1534,7 @@
       if (!sideMenu) return;
       const isInside = sideMenu.contains(e.target);
       const isButton = menuToggle && menuToggle.contains(e.target);
-      if (!isInside && !isButton) {
-        sideMenu.classList.remove("open");
-      }
+      if (!isInside && !isButton) sideMenu.classList.remove("open");
     });
 
     const quotes = [
@@ -1426,10 +1566,7 @@
     function getSortedDataArray() {
       const allData = loadAllDataLocal();
       const dates = Object.keys(allData).sort();
-      return dates.map(date => ({
-        date,
-        ...allData[date]
-      }));
+      return dates.map(date => ({ date, ...allData[date] }));
     }
 
     function buildCharts() {
@@ -1632,19 +1769,15 @@
 
         if (meetsWater) {
           currentWater = consecutive ? currentWater + 1 : 1;
-        } else {
-          currentWater = 0;
-        }
+        } else currentWater = 0;
+
         if (meetsProtein) {
           currentProtein = consecutive ? currentProtein + 1 : 1;
-        } else {
-          currentProtein = 0;
-        }
+        } else currentProtein = 0;
+
         if (meetsWalk) {
           currentWalk = consecutive ? currentWalk + 1 : 1;
-        } else {
-          currentWalk = 0;
-        }
+        } else currentWalk = 0;
 
         bestWater = Math.max(bestWater, currentWater);
         bestProtein = Math.max(bestProtein, currentProtein);
@@ -1796,8 +1929,7 @@
       `;
     }
 
-    // Save / clear handlers
-
+    // Save / clear handlers (clear inputs after save)
     saveBtn.addEventListener("click", async () => {
       if (!currentUser) {
         alert("Please log in again to save your Bariatric Pal data.");
@@ -1831,6 +1963,14 @@
       buildWeeklySummary();
       buildStreaksUI();
       updateJourneySummary(appSettings, getSortedDataArray());
+
+      // Clear inputs
+      waterInput.value = "";
+      proteinInput.value = "";
+      weightInput.value = "";
+      walkInput.value = "";
+      medsInput.checked = false;
+      notesInput.value = "";
 
       alert("Saved your Bariatric Pal log for " + dateStr);
     });
@@ -1866,9 +2006,7 @@
 
     dateInput.addEventListener("change", async () => {
       const dateStr = dateInput.value;
-      if (dateStr) {
-        await loadDataForDate(dateStr);
-      }
+      if (dateStr) await loadDataForDate(dateStr);
     });
 
     // PDF export
@@ -2045,10 +2183,7 @@
     themeButtons.forEach(btn => {
       btn.addEventListener("click", () => {
         const themeName = btn.dataset.theme;
-        const newSettings = {
-          ...appSettings,
-          theme: themeName
-        };
+        const newSettings = { ...appSettings, theme: themeName };
         saveSettingsLocal(newSettings);
         applyTheme(themeName);
       });
@@ -2064,15 +2199,57 @@
           return;
         }
 
-        const newSettings = {
-          ...appSettings,
-          surgeryDate,
-          goalWeight: goalWeightVal
-        };
+        const newSettings = { ...appSettings, surgeryDate, goalWeight: goalWeightVal };
         saveSettingsLocal(newSettings);
 
         updateJourneySummary(newSettings, getSortedDataArray());
         alert("Journey info saved.");
+      });
+    }
+
+    // Donation prompt behavior
+    function openDonationPrompt() {
+      if (!donationPrompt) return;
+      donationPrompt.classList.add("open");
+    }
+
+    function closeDonationPrompt() {
+      if (!donationPrompt) return;
+      donationPrompt.classList.remove("open");
+    }
+
+    function maybeShowDonationPrompt() {
+      const hide = localStorage.getItem(DONATE_HIDE_KEY);
+      if (hide === "true") return;
+      // gentle delay so it doesn't smack people immediately
+      setTimeout(() => {
+        openDonationPrompt();
+      }, 7000);
+    }
+
+    if (donationCloseBtn) {
+      donationCloseBtn.addEventListener("click", () => {
+        closeDonationPrompt();
+      });
+    }
+
+    if (donationLaterBtn) {
+      donationLaterBtn.addEventListener("click", () => {
+        closeDonationPrompt();
+      });
+    }
+
+    if (donationNeverBtn) {
+      donationNeverBtn.addEventListener("click", () => {
+        localStorage.setItem(DONATE_HIDE_KEY, "true");
+        closeDonationPrompt();
+      });
+    }
+
+    if (donationSupportBtn) {
+      donationSupportBtn.addEventListener("click", () => {
+        window.open("https://buymeacoffee.com/bariatric.pal", "_blank");
+        closeDonationPrompt();
       });
     }
 
@@ -2096,6 +2273,9 @@
         buildWeeklySummary();
         buildStreaksUI();
         updateJourneySummary(appSettings, getSortedDataArray());
+
+        // Show donation prompt (if not disabled)
+        maybeShowDonationPrompt();
       } else {
         if (topAuthStatus) topAuthStatus.textContent = "Guest mode";
         if (sideAuthStatus) sideAuthStatus.textContent = "Not signed in";
