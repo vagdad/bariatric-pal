@@ -345,6 +345,7 @@
       <button class="nav-tab active" data-target="homePage">Home</button>
       <button class="nav-tab" data-target="quotePage">Quote of the Day</button>
       <button class="nav-tab" data-target="affirmationsPage">Affirmations</button>
+      <button class="nav-tab" data-target="progressPage">Progress Report</button>
     </nav>
 
     <!-- HOME PAGE -->
@@ -448,7 +449,29 @@
         </ul>
       </section>
     </div>
+
+    <!-- PROGRESS REPORT PAGE -->
+    <div id="progressPage" class="page hidden">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Progress Report</div>
+            <div class="card-subtitle">Your weight trend over time.</div>
+          </div>
+        </div>
+        <p class="hint">
+          This chart uses the weight values you log on the Home page.
+        </p>
+        <canvas id="weightChart" height="160"></canvas>
+        <p id="noWeightData" class="notes-empty" style="text-align:center; margin-top: 8px; display:none;">
+          No weight data yet. Save a few days on the Home page to see your progress.
+        </p>
+      </section>
+    </div>
   </div>
+
+  <!-- Chart.js for the line graph -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
     const STORAGE_KEY = "bariatricPalData";
@@ -468,6 +491,9 @@
     const pages = document.querySelectorAll(".page");
     const quoteText = document.getElementById("quoteText");
     const quoteDate = document.getElementById("quoteDate");
+
+    const noWeightData = document.getElementById("noWeightData");
+    let weightChart; // chart instance
 
     function getTodayString() {
       const today = new Date();
@@ -549,6 +575,7 @@
       `;
     }
 
+    // ---- Tabs / Pages ----
     function showPageById(id) {
       pages.forEach(page => page.classList.add("hidden"));
       navTabs.forEach(tab => tab.classList.remove("active"));
@@ -563,6 +590,11 @@
           tab.classList.add("active");
         }
       });
+
+      // If we just opened Progress Report, (re)build the chart
+      if (id === "progressPage") {
+        buildWeightChart();
+      }
     }
 
     navTabs.forEach(tab => {
@@ -572,6 +604,7 @@
       });
     });
 
+    // ---- Quote of the Day ----
     const quotes = [
       "You are healing, even on the days it doesn’t feel like it.",
       "Small steps every day add up to a big transformation.",
@@ -598,6 +631,69 @@
       quoteDate.textContent = new Date().toLocaleDateString();
     }
 
+    // ---- Progress Report helpers ----
+    function getSortedDataArray() {
+      const allData = loadAllData();
+      const dates = Object.keys(allData).sort();
+      return dates.map(date => ({
+        date,
+        ...allData[date]
+      }));
+    }
+
+    function buildWeightChart() {
+      const dataArr = getSortedDataArray();
+      // Filter to only days that have a numeric weight
+      const points = dataArr.filter(d => d.weight != null && !isNaN(Number(d.weight)));
+
+      if (!points.length) {
+        if (weightChart) {
+          weightChart.destroy();
+          weightChart = null;
+        }
+        if (noWeightData) noWeightData.style.display = "block";
+        return;
+      }
+
+      if (noWeightData) noWeightData.style.display = "none";
+
+      const labels = points.map(d => d.date);
+      const weights = points.map(d => Number(d.weight));
+
+      const ctx = document.getElementById("weightChart").getContext("2d");
+
+      if (weightChart) {
+        weightChart.destroy();
+      }
+
+      weightChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Weight (lbs)",
+              data: weights,
+              borderWidth: 2,
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true }
+          },
+          scales: {
+            x: {
+              ticks: { autoSkip: true, maxTicksLimit: 7 }
+            }
+          }
+        }
+      });
+    }
+
+    // ---- Save / Clear day ----
     saveBtn.addEventListener("click", () => {
       const dateStr = dateInput.value || getTodayString();
 
@@ -614,6 +710,8 @@
       allData[dateStr] = dayData;
       saveAllData(allData);
       updateSummary(dayData);
+      // keep chart in sync if user goes to Progress Report
+      buildWeightChart();
       alert("Saved your Bariatric Pal log for " + dateStr);
     });
 
@@ -626,6 +724,7 @@
           delete allData[dateStr];
           saveAllData(allData);
           loadDataForDate(dateStr);
+          buildWeightChart();
           alert("Cleared data for " + dateStr);
         }
       } else {
@@ -640,14 +739,16 @@
       }
     });
 
-    // Initial load
+    // ---- Initial load ----
     (function init() {
       const todayStr = getTodayString();
       dateInput.value = todayStr;
       loadDataForDate(todayStr);
       showPageById("homePage");
       updateQuote();
+      buildWeightChart(); // in case you already have data saved
     })();
   </script>
 </body>
 </html>
+
