@@ -390,23 +390,6 @@
           </div>
         </div>
 
-        <!-- Symptom & pain tracking -->
-        <div class="inline-row">
-          <div class="field">
-            <label for="pain">Pain (1–10)</label>
-            <input type="number" id="pain" min="0" max="10" placeholder="e.g., 4">
-          </div>
-          <div class="field">
-            <label for="energy">Energy (1–5)</label>
-            <input type="number" id="energy" min="1" max="5" placeholder="e.g., 3">
-          </div>
-        </div>
-
-        <div class="checkbox-row">
-          <input type="checkbox" id="nausea">
-          <label for="nausea">I felt nausea today</label>
-        </div>
-
         <div class="checkbox-row">
           <input type="checkbox" id="meds">
           <label for="meds">I took all my prescribed medicine today</label>
@@ -481,15 +464,7 @@
         <div class="card-header">
           <div>
             <div class="card-title">Progress Report</div>
-            <div class="card-subtitle">Your trends, streaks, and wins.</div>
-          </div>
-        </div>
-
-        <!-- Streaks & badge -->
-        <div id="streakSummary" class="notes-box">
-          <strong>Streaks:</strong>
-          <div class="notes-empty">
-            No streak data yet. Start logging your days to build a streak.
+            <div class="card-subtitle">Your trends at a glance.</div>
           </div>
         </div>
 
@@ -509,12 +484,12 @@
         <h4 class="chart-title">Walk (minutes)</h4>
         <canvas id="walkChart" height="120"></canvas>
 
-        <p id="noWeightData" class="notes-empty" style="text-align:center; margin-top: 8px; display:none;">
+        <p id="noDataMsg" class="notes-empty" style="text-align:center; margin-top: 8px; display:none;">
           No data yet. Save a few days on the Home page to see your progress.
         </p>
 
         <div class="button-row">
-          <button id="downloadJsonBtn" type="button">⬇️ Download My Data (JSON)</button>
+          <button id="downloadJsonBtn" type="button">⬇️ Download My Data (PDF)</button>
         </div>
       </section>
     </div>
@@ -522,6 +497,8 @@
 
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- jsPDF for PDF downloads -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
   <script>
     const STORAGE_KEY = "bariatricPalData";
@@ -531,9 +508,6 @@
     const proteinInput = document.getElementById("protein");
     const weightInput = document.getElementById("weight");
     const walkInput = document.getElementById("walk");
-    const painInput = document.getElementById("pain");
-    const energyInput = document.getElementById("energy");
-    const nauseaInput = document.getElementById("nausea");
     const medsInput = document.getElementById("meds");
     const notesInput = document.getElementById("notes");
 
@@ -547,7 +521,7 @@
     const pages = document.querySelectorAll(".page");
     const quoteText = document.getElementById("quoteText");
     const quoteDate = document.getElementById("quoteDate");
-    const noWeightData = document.getElementById("noWeightData");
+    const noDataMsg = document.getElementById("noDataMsg");
 
     let weightChart, waterChart, proteinChart, walkChart;
 
@@ -582,9 +556,6 @@
         proteinInput.value = dayData.protein ?? "";
         weightInput.value = dayData.weight ?? "";
         walkInput.value = dayData.walk ?? "";
-        painInput.value = dayData.pain ?? "";
-        energyInput.value = dayData.energy ?? "";
-        nauseaInput.checked = !!dayData.nausea;
         medsInput.checked = !!dayData.meds;
         notesInput.value = dayData.notes ?? "";
         updateSummary(dayData);
@@ -593,9 +564,6 @@
         proteinInput.value = "";
         weightInput.value = "";
         walkInput.value = "";
-        painInput.value = "";
-        energyInput.value = "";
-        nauseaInput.checked = false;
         medsInput.checked = false;
         notesInput.value = "";
         summaryDiv.innerHTML = '<p class="notes-empty">No data saved for this date yet.</p>';
@@ -604,9 +572,6 @@
 
     function updateSummary(dayData) {
       const medsText = dayData.meds ? "✅ Took medicine" : "⚠️ Medicine not logged";
-      const nauseaText = dayData.nausea ? "Yes" : "No / not logged";
-      const painText = dayData.pain != null ? `${dayData.pain} / 10` : "Not logged";
-      const energyText = dayData.energy != null ? `${dayData.energy} / 5` : "Not logged";
 
       summaryDiv.innerHTML = `
         <div class="summary-grid">
@@ -629,18 +594,6 @@
           <div class="summary-item">
             <div class="summary-label">Medication</div>
             <div class="summary-value">${medsText}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Pain</div>
-            <div class="summary-value">${painText}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Energy</div>
-            <div class="summary-value">${energyText}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Nausea</div>
-            <div class="summary-value">${nauseaText}</div>
           </div>
         </div>
         <div class="notes-box">
@@ -669,7 +622,6 @@
 
       if (id === "progressPage") {
         buildCharts();
-        updateStreakSummary();
       }
     }
 
@@ -713,7 +665,7 @@
       quoteDate.textContent = new Date().toLocaleDateString();
     }
 
-    // Helper: sorted array of day objects
+    // Convert stored data to sorted array
     function getSortedDataArray() {
       const allData = loadAllData();
       const dates = Object.keys(allData).sort();
@@ -723,100 +675,14 @@
       }));
     }
 
-    // Streaks & badges
-    function calculateStreaks() {
-      const allData = loadAllData();
-      const dates = Object.keys(allData).sort();
-      if (!dates.length) {
-        return { currentStreak: 0, longestStreak: 0 };
-      }
-      const oneDayMs = 1000 * 60 * 60 * 24;
-
-      let longest = 1;
-      let current = 1;
-      for (let i = 1; i < dates.length; i++) {
-        const prev = new Date(dates[i - 1]);
-        const cur = new Date(dates[i]);
-        const diffDays = Math.round((cur - prev) / oneDayMs);
-        if (diffDays === 1) {
-          current++;
-        } else {
-          current = 1;
-        }
-        if (current > longest) longest = current;
-      }
-
-      // Current streak ending on the most recent date
-      let currentStreak = 1;
-      let lastDate = new Date(dates[dates.length - 1]);
-      for (let i = dates.length - 2; i >= 0; i--) {
-        const d = new Date(dates[i]);
-        const diffDays = Math.round((lastDate - d) / oneDayMs);
-        if (diffDays === 1) {
-          currentStreak++;
-          lastDate = d;
-        } else {
-          break;
-        }
-      }
-
-      return { currentStreak, longestStreak: longest };
-    }
-
-    function getStreakBadgeMessage(currentStreak) {
-      if (currentStreak === 0) {
-        return "No streak yet – today is a great day to start.";
-      } else if (currentStreak < 3) {
-        return "You’ve started your streak – keep logging and watch it grow.";
-      } else if (currentStreak < 7) {
-        return "3-Day Streak: Starter – you’re building a new routine.";
-      } else if (currentStreak < 14) {
-        return "7-Day Streak: Unstoppable – you’re showing real commitment.";
-      } else if (currentStreak < 30) {
-        return "14-Day Streak: Dedicated – your consistency is changing your life.";
-      } else {
-        return "30-Day Streak: New Life – you are rewriting your story.";
-      }
-    }
-
-    function updateStreakSummary() {
-      const streakBox = document.getElementById("streakSummary");
-      if (!streakBox) return;
-
-      const allData = loadAllData();
-      const hasAny = Object.keys(allData).length > 0;
-
-      if (!hasAny) {
-        streakBox.innerHTML = `
-          <strong>Streaks:</strong>
-          <div class="notes-empty">
-            No streak data yet. Start logging your days to build a streak.
-          </div>
-        `;
-        return;
-      }
-
-      const { currentStreak, longestStreak } = calculateStreaks();
-      const badgeMessage = getStreakBadgeMessage(currentStreak);
-
-      streakBox.innerHTML = `
-        <strong>Streaks:</strong>
-        <div style="margin-top:4px;">
-          <div>Current streak: <strong>${currentStreak}</strong> day${currentStreak === 1 ? "" : "s"}</div>
-          <div>Longest streak: <strong>${longestStreak}</strong> day${longestStreak === 1 ? "" : "s"}</div>
-          <div style="margin-top:4px;">${badgeMessage}</div>
-        </div>
-      `;
-    }
-
-    // Charts for weight, water, protein, walk
+    // Build all charts
     function buildCharts() {
       const dataArr = getSortedDataArray();
 
       const weightPoints = dataArr.filter(d => d.weight != null && !isNaN(Number(d.weight)));
-      const waterPoints = dataArr.filter(d => d.water != null && !isNaN(Number(d.water)) && Number(d.water) > 0);
-      const proteinPoints = dataArr.filter(d => d.protein != null && !isNaN(Number(d.protein)) && Number(d.protein) > 0);
-      const walkPoints = dataArr.filter(d => d.walk != null && !isNaN(Number(d.walk)) && Number(d.walk) > 0);
+      const waterPoints = dataArr.filter(d => d.water != null && !isNaN(Number(d.water)));
+      const proteinPoints = dataArr.filter(d => d.protein != null && !isNaN(Number(d.protein)));
+      const walkPoints = dataArr.filter(d => d.walk != null && !isNaN(Number(d.walk)));
 
       const hasAny =
         weightPoints.length || waterPoints.length || proteinPoints.length || walkPoints.length;
@@ -826,11 +692,11 @@
         if (waterChart) { waterChart.destroy(); waterChart = null; }
         if (proteinChart) { proteinChart.destroy(); proteinChart = null; }
         if (walkChart) { walkChart.destroy(); walkChart = null; }
-        if (noWeightData) noWeightData.style.display = "block";
+        if (noDataMsg) noDataMsg.style.display = "block";
         return;
       }
 
-      if (noWeightData) noWeightData.style.display = "none";
+      if (noDataMsg) noDataMsg.style.display = "none";
 
       const ctxWeight = document.getElementById("weightChart").getContext("2d");
       const ctxWater = document.getElementById("waterChart").getContext("2d");
@@ -948,9 +814,6 @@
         protein: Number(proteinInput.value) || 0,
         weight: weightInput.value ? Number(weightInput.value) : null,
         walk: Number(walkInput.value) || 0,
-        pain: painInput.value ? Number(painInput.value) : null,
-        energy: energyInput.value ? Number(energyInput.value) : null,
-        nausea: nauseaInput.checked,
         meds: medsInput.checked,
         notes: notesInput.value.trim()
       };
@@ -960,7 +823,6 @@
       saveAllData(allData);
       updateSummary(dayData);
       buildCharts();
-      updateStreakSummary();
       alert("Saved your Bariatric Pal log for " + dateStr);
     });
 
@@ -974,7 +836,6 @@
           saveAllData(allData);
           loadDataForDate(dateStr);
           buildCharts();
-          updateStreakSummary();
           alert("Cleared data for " + dateStr);
         }
       } else {
@@ -989,20 +850,47 @@
       }
     });
 
-    // Data export (JSON)
+    // Data export (PDF)
     if (downloadJsonBtn) {
       downloadJsonBtn.addEventListener("click", () => {
-        const data = loadAllData();
-        const json = JSON.stringify(data, null, 2);
-        const blob = new Blob([json], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "bariatric-pal-data.json";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const allData = loadAllData();
+        const dates = Object.keys(allData).sort();
+
+        if (!dates.length) {
+          alert("No data to export yet.");
+          return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(16);
+        doc.text("Bariatric Pal Progress Report", 105, 12, { align: "center" });
+
+        doc.setFontSize(10);
+        let y = 22;
+
+        dates.forEach((date) => {
+          const d = allData[date];
+
+          const line = `${date} – ` +
+            `W: ${d.weight != null ? d.weight : "-"} lbs | ` +
+            `Water: ${d.water ?? 0} oz | ` +
+            `Protein: ${d.protein ?? 0} g | ` +
+            `Walk: ${d.walk ?? 0} min | ` +
+            `Meds: ${d.meds ? "Yes" : "No"}`;
+
+          if (y > 280) {
+            doc.addPage();
+            y = 20;
+          }
+
+          doc.text(line, 10, y);
+          y += 7;
+        });
+
+        doc.save("bariatric-pal-report.pdf");
       });
     }
 
@@ -1013,7 +901,6 @@
       showPageById("homePage");
       updateQuote();
       buildCharts();
-      updateStreakSummary();
     })();
   </script>
 </body>
